@@ -11,6 +11,8 @@ services:
     restart: unless-stopped
     init: true
     read_only: true
+    volumes:
+      - /home/juan/jemcalc/shared/downloads:/srv/web/downloads:ro
     tmpfs:
       - /tmp:size=64m,mode=1777
     cap_drop: [ALL]

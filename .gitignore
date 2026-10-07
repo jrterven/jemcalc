@@ -13,6 +13,10 @@ __pycache__/
 *.pem
 *.key
 *.der
+*.jks
+*.keystore
+*.p12
+*.pfx
 coverage/
 artifacts/
 .playwright-cli/

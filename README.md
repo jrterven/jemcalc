@@ -149,6 +149,30 @@ Las compilaciones profile/release no importan tokens desde Dart defines: conserv
 
 El backend de desarrollo requiere que la Mac siga encendida y sea accesible para las operaciones remotas. Los certificados locales caducan a los 30 días; para renovarlos, mueve `server/.tls` a un respaldo privado, repite la configuración y recompila. Un cambio de dirección IP puede requerir el mismo procedimiento.
 
+### Instalar el APK Android sin herramientas de desarrollo
+
+Para el piloto privado, inicia sesión en [calc.jemailabs.com](https://calc.jemailabs.com) desde el teléfono y abre el [instalador Android 1.0.0, compilación 2](https://calc.jemailabs.com/downloads/jemcalc-1.0.0-2.apk). Descárgalo, ábrelo y, si Android lo solicita, permite a ese navegador instalar aplicaciones de esa fuente. No requiere depuración USB.
+
+La app ya apunta al servidor alojado. Introduce el token del piloto facilitado por el administrador en **Configuración → Token del piloto**, guarda los cambios y prueba `x+1=2`. El token nativo es diferente de la clave de acceso de la web y no está dentro del instalador.
+
+El APK release se firma con una clave propia de Jem Calc. Para reproducirlo, configura el archivo privado `app/android/key.properties`:
+
+```properties
+storeFile=/ruta/privada/jemcalc-release.jks
+storePassword=TU_CONTRASENA_PRIVADA
+keyAlias=jemcalc-release
+keyPassword=TU_CONTRASENA_PRIVADA
+```
+
+Desde `app/`, con los certificados opcionales `assets/pilot/server.pem` y `server.der` guardados temporalmente fuera de los assets para una distribución de producción:
+
+```sh
+flutter build apk --release --build-name=1.0.0 --build-number=2 \
+  --dart-define=PILOT_URL=https://calc.jemailabs.com/api
+```
+
+El resultado es `app/build/app/outputs/flutter-apk/app-release.apk`. La configuración de release no utiliza la firma de debug como alternativa. Conserva una copia privada del keystore y sus contraseñas: las actualizaciones requieren la misma firma y un número de compilación mayor. Las instalaciones anteriores firmadas en debug/profile conservan su firma de pruebas y no se pueden actualizar con esta clave; no las desinstales sin respaldar su historial.
+
 ### 3. Web
 
 Con el backend de desarrollo configurado y ejecutándose:

@@ -9,6 +9,7 @@ The owner chose a private pilot with a shared access password on 6 October 2026.
 - SSH: `juan@prod` (`144.126.131.104`).
 - `/home/juan/jemcalc/releases/<release>` contains allowlisted deployment files.
 - `/home/juan/jemcalc/current` points to the active release.
+- The download mount was added in configuration release `20261007-android-installer`, reusing the existing `20261006-pilot-3` application image.
 - `/home/juan/jemcalc/shared/.env` contains production credentials, mode 600; each release's `deploy/.env` is a symlink to it.
 - Active Compose project: `jemcalc`; container: `jemcalc-app-1`; image: `jemcalc:20261006-pilot-3` (absolute HTTPS access redirects).
 - Backend listener: **127.0.0.1:5188**, forwarded to container port 8080. This port was checked unused before deployment.
@@ -16,6 +17,16 @@ The owner chose a private pilot with a shared access password on 6 October 2026.
 - Cloudflare: proxied A record `calc` → `144.126.131.104`; TTL Auto; zone encryption remains **Full (strict)**. Nginx uses the existing Cloudflare Origin CA wildcard certificate for `*.jemailabs.com`. Keep the record proxied: the origin certificate is intended for Cloudflare, while visitors use Cloudflare's publicly trusted edge certificate.
 
 Docker restarts the service automatically (`unless-stopped`). Nginx limits login attempts, API requests and concurrent connections. The container is non-root, has a read-only filesystem, bounded temporary storage, CPU/memory/process limits and bounded log rotation. The existing CAS process timeouts, two-worker capacity, upload limits and dictation duration limits remain active. This is a small private pilot, not an unrestricted public service.
+
+## Private Android downloads
+
+Compose mounts `/home/juan/jemcalc/shared/downloads` read-only at `/srv/web/downloads`. Only verified release APKs and their public checksums belong in this directory; never place tokens, provider credentials or signing material there. The existing web access boundary protects `/downloads/` with the same signed browser session as the calculator. Nginx has no public alias or authentication bypass for these files.
+
+The first signed Android installer is `/downloads/jemcalc-1.0.0-2.apk`. Users sign in to the website and then reopen the download link. The APK contains only the public API URL; the native pilot token is entered once in the app's settings.
+
+Signing material is private and excluded from Git: local `.local/android-signing/` plus `app/android/key.properties`. Keep a secure backup and reuse the same key for future updates. Neither the signing key nor the native token is uploaded with the APK. Each update must increase Android's build number. The Android release signature differs from the earlier debug/profile test installations.
+
+To add a download, upload it under a temporary name, verify its SHA-256 on the server, then rename it to its final versioned filename. Existing downloads do not require restarting the app. The first addition of the Compose mount requires recreating only the Jem Calc container; create the shared directory beforehand with permissions allowing the non-root container to read its public artifacts.
 
 ## Validate and update
 
