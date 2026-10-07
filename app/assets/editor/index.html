@@ -6,6 +6,8 @@
 body{display:flex;flex-direction:column;overflow-y:auto}#field-wrap{padding:8px 6px;min-height:96px;display:flex;align-items:center;flex:1;overflow:auto}math-field{width:100%;min-width:0;border:0;outline:none;background:transparent;color:var(--fg);font-size:30px;padding:6px;--caret-color:var(--accent);--selection-background-color:#c42d4340;--placeholder-color:var(--accent);--contains-highlight-background-color:#c42d4320;--smart-fence-color:var(--accent)}math-field::part(virtual-keyboard-toggle),math-field::part(menu-toggle){display:none}
 #keyboard{width:100%;height:280px;flex-shrink:0;position:relative;--keyboard-background:var(--bg);--keyboard-toolbar-background:var(--bg);--keycap-background:var(--key);--keycap-text:var(--fg);--keycap-background-hover:var(--key-hover);--keycap-text-hover:var(--fg);--keycap-background-active:var(--key-pressed);--keycap-text-active:var(--fg);--keycap-background-pressed:var(--key-pressed);--keycap-text-pressed:var(--fg);--keycap-secondary-background:var(--key);--keycap-secondary-background-hover:var(--key-hover);--keycap-secondary-text:var(--fg);--keycap-primary-background:var(--accent);--keycap-primary-background-hover:var(--accent);--keycap-primary-text:var(--on-accent);--keycap-height:46px;--keycap-width:calc((100cqw - 24px)/4);--keyboard-toolbar-font-size:14px;--keyboard-toolbar-text-active:var(--accent);--keycap-gap:4px;--keycap-font-size:22px;--keyboard-padding-bottom:4px;--keyboard-padding-top:4px;--keycap-border:1px solid var(--line);--keycap-border-radius:12px;--keycap-shadow:none;--keyboard-toolbar-text:var(--fg)}
 #keyboard .MLK__toolbar>.left{column-gap:8px}
+#jem-scientific .MLK__rows{--keycap-width:calc((100cqw - 24px)/5);--_keycap-font-size:20px;--_keycap-small-font-size:13px}
+#jem-abc .MLK__rows{--keycap-width:min(68px,calc((100cqw - 16px)/10));--_keycap-gap:2px;--_keycap-font-size:18px}
 #keyboard.hidden{display:none}body.compact #field-wrap{min-height:60px;padding:4px 8px}body.compact math-field{font-size:27px}
 @media(max-height:420px){#field-wrap{min-height:64px;padding:0 6px}}
 </style></head><body><div id="field-wrap"><math-field id="mf" aria-label="Equation" inputmode="none" math-virtual-keyboard-policy="manual"></math-field></div><div id="keyboard"></div>
@@ -22,6 +24,9 @@ function key(label, latex=label){return {label,latex};}
 function functionKey(latex){return {latex,label:latex.slice(1),insert:latex+'\\left(#0\\right?'};}
 // typedText uses MathLive's smart-fence behavior when closing a function.
 function fenceKey(label){return {label,command:['typedText',label,{simulateKeystroke:true}]};}
+// QWERTY enters mathematical letters and numbers in the current argument.
+function typedKey(letter){return {label:letter,command:['typedText',letter,{simulateKeystroke:true}]};}
+function letterKeys(letters){return [...letters].map(letter=>({...typedKey(letter),shift:typedKey(letter.toUpperCase())}));}
 function layouts(es){return [
  {label:es?'Básico':'Basic',tooltip:'123',rows:[
  [{label:'C',command:'deleteAll'},fenceKey('('),fenceKey(')'),{label:'⌫',command:'deleteBackward'}],
@@ -29,18 +34,18 @@ function layouts(es){return [
  [key('4'),key('5'),key('6'),key('×','\\times')],
  [key('1'),key('2'),key('3'),key('−','-')],
  [key('0'),key('.'),key('='),key('+')]]},
- {label:es?'Científico':'Scientific',rows:[
- [functionKey('\\sin'),functionKey('\\cos'),functionKey('\\tan'),{label:'⌫',command:'deleteBackward'}],
+ {label:es?'Científico':'Scientific',layers:[{id:'jem-scientific',rows:[
+ [functionKey('\\sin'),functionKey('\\cos'),functionKey('\\tan'),
+  {latex:'^{#?}',label:'xⁿ'},{label:'⌫',command:'deleteBackward'}],
  [{latex:'\\arcsin',label:'sin⁻¹',class:'small'},
   {latex:'\\arccos',label:'cos⁻¹',class:'small'},
-  {latex:'\\arctan',label:'tan⁻¹',class:'small'},
-  {latex:'^{#?}',label:'xⁿ'}],
- ['\\ln','\\log',{latex:'\\exp\\left(#0\\right)',label:'exp'},
-  {latex:'\\frac{#0}{#?}',label:'a/b'}],
- ['\\pi','e',{latex:'\\sqrt{#0}',label:'√'},
-  {latex:'\\sqrt[#?]{#0}',label:'ⁿ√'}],
- ['x',{latex:'\\left|#0\\right|',label:'|x|'},'!',
-  {label:'↵',class:'action',command:['performWithFeedback','commit']}]]},
+  {latex:'\\arctan',label:'tan⁻¹',class:'small'},'\\ln','\\log'],
+ [{latex:'\\sqrt{#0}',label:'√'},{latex:'\\sqrt[#?]{#0}',label:'ⁿ√'},
+  {latex:'\\frac{#0}{#?}',label:'a/b'},{latex:'\\exp\\left(#0\\right)',label:'exp'},
+  {latex:'\\left|#0\\right|',label:'|x|'}],
+ ['x','y','z','\\pi','e'],
+ [fenceKey('('),fenceKey(')'),'!','=',
+  {label:'↵',class:'action',command:['performWithFeedback','commit']}]]}]},
  {label:es?'Cálculo':'Calculus',rows:[
  [{latex:'\\frac{d}{dx}\\left(#0\\right)',label:'d/dx'},
   {latex:'\\int #0 \\,\\mathrm{d}x',label:'∫'},
@@ -50,7 +55,16 @@ function layouts(es){return [
  [key('dx','\\,\\mathrm{d}x'),key('dy','\\,\\mathrm{d}y'),key('dz','\\,\\mathrm{d}z'),key('dt','\\,\\mathrm{d}t')],
  [fenceKey('('),fenceKey(')'),'=',{latex:';',label:es?'fila':'row'}],
  [{label:'↶',command:'undo'},{label:'↷',command:'redo'},
-  {label:'←',command:'moveToPreviousChar'},{label:'→',command:'moveToNextChar'}]]}
+  {label:'←',command:'moveToPreviousChar'},{label:'→',command:'moveToNextChar'}]]},
+ {label:'ABC',tooltip:es?'Letras · QWERTY':'Letters · QWERTY',displayShiftedKeycaps:false,layers:[{id:'jem-abc',rows:[
+ [...'1234567890'].map(n=>typedKey(n)),
+ letterKeys('qwertyuiop'),
+ ['[separator-5]',...letterKeys('asdfghjkl'),'[separator-5]'],
+ [{label:'[shift]',tooltip:es?'Mayúsculas':'Uppercase',width:1.5},...letterKeys('zxcvbnm'),{label:'⌫',command:'deleteBackward',width:1.5}],
+ [fenceKey('('),fenceKey(')'),key('+'),key('−','-'),key('='),
+  {...typedKey(' '),label:'␣',tooltip:es?'Espacio':'Space',width:2},
+  {label:'←',command:'moveToPreviousChar'},{label:'→',command:'moveToNextChar'},
+  {label:'↵',class:'action',command:['performWithFeedback','commit']}]]}]}
 ];}
 // Reconcile against MathLive's actual state after the native view has resized.
 // A requested keyboard can become hidden when its WebView loses focus.
@@ -63,6 +77,16 @@ let syncFrame;
 function scheduleKeyboardSync(){cancelAnimationFrame(syncFrame);syncFrame=requestAnimationFrame(syncKeyboard);}
 new ResizeObserver(scheduleKeyboardSync).observe(document.documentElement);
 mf.addEventListener('focus',scheduleKeyboardSync);
+// This manual keyboard belongs to one editor, even while Flutter has focus.
+// Route editing commands directly to it instead of relying on MathLive's
+// delayed (60ms) reconnection of a blurred field to the virtual keyboard.
+const dispatchKeyboardCommand=window.mathVirtualKeyboard.executeCommand.bind(window.mathVirtualKeyboard);
+const keyboardCommands=new Set(['switchKeyboardLayer','toggleVirtualKeyboard','hideVirtualKeyboard','showVirtualKeyboard']);
+window.mathVirtualKeyboard.executeCommand=command=>{
+ const selector=Array.isArray(command)?command[0]:command;
+ if(keyboardCommands.has(selector))return dispatchKeyboardCommand(command);
+ mf.focus({preventScroll:true});return mf.executeCommand(command);
+};
 mf.menuItems=[];mf.smartFence=true;mf.inlineShortcuts={...mf.inlineShortcuts,sen:'\\sin',tg:'\\tan'};
 window.configure=function(c){
  const st=document.documentElement.style;const dark=c.dark;

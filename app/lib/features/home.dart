@@ -485,12 +485,9 @@ class _Actions extends StatelessWidget {
             tooltip: s.t('Variable', 'Variable'),
             initialValue: m.variable,
             onSelected: m.setVariable,
-            itemBuilder: (_) => [
-              'x',
-              'y',
-              'z',
-              't',
-            ].map((v) => PopupMenuItem(value: v, child: Text(v))).toList(),
+            itemBuilder: (_) => m.variableOptions
+                .map((v) => PopupMenuItem(value: v, child: Text(v)))
+                .toList(),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10),
               child: Text(

@@ -520,6 +520,18 @@ class AppModel extends ChangeNotifier {
     }
   }
 
+  /// Offer the letters actually used in the equation as calculation targets.
+  /// Read the AST so function names and constants don't become fake variables.
+  List<String> get variableOptions {
+    final names = <String>{'x', 'y', 'z', 't', variable};
+    try {
+      names.addAll(_symbols(parseLatex(latex)));
+    } on MathParseException {
+      // Keep the current selection available while an expression is incomplete.
+    }
+    return names.toList();
+  }
+
   bool requiresCasStructure(dynamic node) {
     if (node is List) return node.any(requiresCasStructure);
     if (node is! Map) return false;

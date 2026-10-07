@@ -83,6 +83,33 @@ void main() {
     return model;
   }
 
+  test('variable picker offers actual letters, not functions or constants', () {
+    final m = model()..edit(r'a+b+N+\sin(q)+\pi+e');
+    expect(m.variableOptions, ['x', 'y', 'z', 't', 'a', 'b', 'N', 'q']);
+    m.setVariable('q');
+    m.edit(r'\frac{a}{');
+    expect(m.variableOptions, contains('q'));
+  });
+
+  test('QWERTY variables can be selected for calculus and persist', () async {
+    FlutterSecureStorage.setMockInitialValues({});
+    final m = model()
+      ..edit('a^2+b')
+      ..setOperation('differentiate')
+      ..setVariable('a');
+    final pending = m.calculate();
+    expect(api.calls.single.body['variable'], 'a');
+    expect(api.calls.single.body['operation'], 'differentiate');
+    api.calls.single.response.complete(answer('2a'));
+    await pending;
+    await m.save();
+    final reopened = AppModel(store: store);
+    addTearDown(reopened.dispose);
+    await reopened.load();
+    expect(reopened.variable, 'a');
+    expect(reopened.variableOptions, containsAll(['a', 'b']));
+  });
+
   test(
     'curve visibility survives reopening without deleting calculation history',
     () async {

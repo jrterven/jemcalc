@@ -292,6 +292,88 @@ try {
     await page.screenshot({ path: join(output, 'editor-calculus-differentials.png') });
   });
 
+  await check('scientific keyboard exposes x, y and z without adding height', async () => {
+    await scientificTab();
+    for(const letter of ['x','y','z']) {
+      await page.evaluate(()=>window.setDraft(''));
+      await visibleKey(letter).click();assert.equal(await value(),letter);
+    }
+    assert.equal(await page.locator('.MLK__layer.is-visible .MLK__row').count(),5);
+  });
+
+  await check('ABC types all lowercase letters and numbers through the Flutter bridge', async () => {
+    await toolbar().getByText('ABC',{exact:true}).click();
+    for(const letter of 'abcdefghijklmnopqrstuvwxyz0123456789') {
+      await page.evaluate(()=>window.setDraft(''));
+      const before=await page.evaluate(()=>jemEvents.filter(e=>e.type==='input').length);
+      await visibleKey(letter).click();assert.equal(await value(),letter);
+      await page.waitForFunction(before=>jemEvents.filter(e=>e.type==='input').length>before,before);
+    }
+    await page.evaluate(()=>window.setDraft(''));
+    for(const label of ['n','+','1','=','2']) await visibleKey(label).click();
+    assert.equal(await value(),'n+1=2');
+    const before=await submits();await visibleKey('↵').click();assert.equal(await submits()-before,1);
+  });
+
+  await check('ABC edits at the caret, repairs a differential and survives mode switches', async () => {
+    await page.evaluate(()=>window.setDraft('n+1=2'));
+    await visibleKey('←').click();await visibleKey('3').click();
+    assert.equal(await value(),'n+1=32');
+    await visibleKey('⌫').click();assert.equal(await value(),'n+1=2');
+    await page.evaluate(()=>window.setDraft('\\int n^2'));
+    await visibleKey('Espacio').click();await visibleKey('d').click();await visibleKey('n').click();
+    assert((await value()).replace(/\\[,:;! ]|\s/g,'').endsWith('dn'),await value());
+    const before=await value();
+    await config({keyboard:false});await config({keyboard:true});
+    assert(await visibleKey('q').isVisible());assert.equal(await value(),before);
+    await config({dark:true});assert(await visibleKey('q').isVisible());
+    await config({dark:false});
+  });
+
+  await check('virtual keys resume editing after a host action takes focus', async () => {
+    await page.evaluate(()=>{
+      window.setDraft('n+1');
+      const button=document.createElement('button');button.id='outside-action';
+      document.body.append(button);button.focus();
+    });
+    await visibleKey('2').click();assert.equal(await value(),'n+12');
+    await page.locator('#outside-action').evaluate(e=>e.remove());
+  });
+
+  await check('QWERTY can type a function and continue outside its argument', async () => {
+    await page.evaluate(()=>window.setDraft(''));
+    for(const label of ['s','i','n','(','x',')','+','1'])await visibleKey(label).click();
+    assert.match(await value(),/^(?:\\sin|sin)\\left\(x\\right\)\+1$/);
+  });
+
+  await check('ABC Shift enters uppercase variables and retains normal typing', async () => {
+    await page.evaluate(()=>window.setDraft(''));
+    await page.locator('#jem-abc .shift').click();
+    await page.locator('#jem-abc .MLK__row').nth(1).locator('.MLK__keycap').first().click();
+    assert.equal(await value(),'Q');
+    // MathLive returns to lowercase after a single shifted key.
+    await visibleKey('n').click();assert.equal(await value(),'Qn');
+  });
+
+  for(const language of ['es','en']) {
+    await check(`four tabs and QWERTY fit a narrow mobile viewport in ${language}`,async()=>{
+      await config({language});await page.setViewportSize({width:304,height:400});
+      await toolbar().getByText('ABC',{exact:true}).click();
+      const tabs=await toolbar().locator('.left>div').evaluateAll(els=>els.map(e=>{
+        const r=e.getBoundingClientRect();return {left:r.left,right:r.right};
+      }));
+      assert.equal(tabs.length,4);assert(tabs.every(r=>r.left>=0&&r.right<=304),JSON.stringify(tabs));
+      const keys=await page.locator('#jem-abc .MLK__row').nth(1).locator('.MLK__keycap').evaluateAll(els=>els.map(e=>{
+        const r=e.getBoundingClientRect();return {left:r.left,right:r.right,width:r.width,height:r.height};
+      }));
+      assert.equal(keys.length,10);
+      assert(keys.every(r=>r.left>=0&&r.right<=304&&r.width>=25&&r.height>=44),JSON.stringify(keys));
+      assert.equal(await page.locator('#jem-abc .MLK__row').count(),5);
+      await page.screenshot({path:join(output,`editor-qwerty-mobile-${language}.png`)});
+    });
+  }
+  await config({language:'es'});
+
   await check('confirmed missing denominator focuses its slot; later configure preserves caret', async () => {
     await toolbar().getByText('Básico', { exact: true }).click();
     await config({ latex: '\\frac{1}{\\placeholder{}}', focusRequest: 1 });
