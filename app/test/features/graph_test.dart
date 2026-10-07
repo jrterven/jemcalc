@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:jem_calc/features/graph.dart';
 import 'package:jem_calc/core/strings.dart';
 import 'package:jem_calc/math/parser.dart';
+import 'package:jem_calc/math/plot.dart';
 
 Map<String, dynamic> request(
   String expression, {
@@ -85,6 +86,59 @@ void main() {
       expect(segment.first[0] <= pole && segment.last[0] >= pole, isFalse);
     }
   }
+
+  test('vertical lines span and clip to the current viewport', () {
+    final plot = preparePlots(parseLatex('2x=4')).single;
+    final result = sampleCurves({
+      ...request('x'),
+      'curves': [plot],
+    });
+    expect(result[0], [
+      [
+        [2.0, -10.0],
+        [2.0, 10.0],
+      ],
+    ]);
+    expect(
+      sampleCurves({
+        ...request('x', xmin: 3, xmax: 4),
+        'curves': [plot],
+      })[0],
+      isEmpty,
+    );
+  });
+  test('sampled lines satisfy the original system', () {
+    final curves = preparePlots(parseLatex('3x+y=5;2x-y=3'));
+    final result = sampleCurves({...request('x'), 'curves': curves});
+    expect(result.keys, [0, 1]);
+    for (final p in result[0]!.expand((line) => line)) {
+      expect(3 * p[0] + p[1], closeTo(5, 1e-11));
+    }
+    for (final p in result[1]!.expand((line) => line)) {
+      expect(2 * p[0] - p[1], closeTo(3, 1e-11));
+    }
+  });
+  testWidgets('system rows have independent visibility and deletion controls', (
+    tester,
+  ) async {
+    final curves = preparePlots(parseLatex('3x+y=5;2x-y=3'));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: GraphScreen(curves: curves, strings: const Strings('es')),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byType(Checkbox), findsNWidgets(2));
+    await tester.tap(find.byType(Checkbox).first);
+    await tester.pumpAndSettle();
+    expect(curves.first['visible'], false);
+    expect(curves, hasLength(2));
+    await tester.tap(find.byIcon(Icons.delete_outline_rounded).last);
+    await tester.pumpAndSettle();
+    expect(curves, hasLength(1));
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+  });
 
   group('Adaptive real-domain plotting', () {
     test('reciprocal poles split paths even between initial samples', () {

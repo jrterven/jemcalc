@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
 import '../core/model.dart';
-import '../math/latex.dart';
 import 'camera_panel.dart';
 import 'graph.dart';
 import 'ink_pad.dart';
@@ -41,23 +40,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   void graph(AppModel m) {
     try {
-      final ast = m.graphExpression();
-      final formula = astToLatex(ast);
-      if (!m.curves.any(
-        (c) => c['latex'] == formula && c['angleMode'] == m.angleMode,
-      )) {
-        if (m.curves.length == 4) {
-          m.report(
-            m.s.t(
-              'Quita una curva antes de añadir otra.',
-              'Remove a curve before adding another.',
-            ),
-          );
-          return;
-        }
-        m.curves.add({'ast': ast, 'latex': formula, 'angleMode': m.angleMode});
-        m.scheduleSave();
-      }
+      m.addDraftToGraph();
       Navigator.push(
         context,
         MaterialPageRoute<void>(

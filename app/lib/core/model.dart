@@ -8,6 +8,7 @@ import '../math/ast.dart';
 import '../math/parser.dart';
 import '../math/evaluator.dart';
 import '../math/completion.dart';
+import '../math/plot.dart';
 import 'api.dart';
 import 'draft.dart';
 import 'store.dart';
@@ -456,28 +457,55 @@ class AppModel extends ChangeNotifier {
     return node.values.expand((v) => _symbols(v)).toSet();
   }
 
-  MathNode graphExpression() {
-    var ast = parseLatex(latex);
-    if (ast['type'] == 'equation') {
-      if ((ast['left'] as Map)['type'] != 'symbol' ||
-          (ast['left'] as Map)['name'] != 'y') {
-        throw MathParseException(
-          s.t('Usa y=f(x) para graficar.', 'Use y=f(x) to graph.'),
-        );
-      }
-      ast = Map<String, dynamic>.from(ast['right'] as Map);
+  void addDraftToGraph() {
+    final List<Map<String, dynamic>> proposed;
+    try {
+      proposed = preparePlots(parseLatex(latex), angleMode: angleMode);
+    } on PlotException catch (e) {
+      throw MathParseException(switch (e.reason) {
+        'variables' => s.t(
+          'La gráfica admite las variables x e y.',
+          'The graph supports x and y.',
+        ),
+        'identity' => s.t(
+          'Esta igualdad se cumple en todo el plano; no define una curva.',
+          'This equality holds throughout the plane; it does not define a curve.',
+        ),
+        'empty' => s.t(
+          'Esta igualdad no tiene puntos que graficar.',
+          'This equality has no points to plot.',
+        ),
+        _ => s.t(
+          'Puedes graficar funciones y=f(x) y ecuaciones lineales en x e y, también en sistema.',
+          'You can plot y=f(x) functions and linear equations in x and y, including systems.',
+        ),
+      });
     }
-    if (_symbols(ast).difference({'x'}).isNotEmpty ||
-        requiresCasStructure(ast)) {
+    bool same(Map<String, dynamic> a, Map<String, dynamic> b) =>
+        a['latex'] == b['latex'] &&
+        a['angleMode'] == b['angleMode'] &&
+        (a['kind'] ?? 'function') == (b['kind'] ?? 'function');
+    final additions = <Map<String, dynamic>>[];
+    for (final curve in proposed) {
+      if (!curves.any((c) => same(c, curve)) &&
+          !additions.any((c) => same(c, curve))) {
+        additions.add(curve);
+      }
+    }
+    if (curves.length + additions.length > 4) {
       throw MathParseException(
         s.t(
-          'La gráfica necesita una función numérica de x.',
-          'The graph needs a numeric function of x.',
+          'La gráfica admite hasta cuatro ecuaciones. Quita alguna antes de añadir este sistema.',
+          'The graph supports up to four equations. Remove some before adding this system.',
         ),
       );
     }
-    // Domain holes are handled by the graph.
-    return ast;
+    // Commit the complete batch only after every row and the capacity are valid.
+    curves.addAll(additions);
+    error = null;
+    notice = null;
+    scheduleSave();
+    _notify();
   }
 
   bool get hasBoundVariable {

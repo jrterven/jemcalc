@@ -26,6 +26,21 @@ CurveSegments sampleCurve(Map<String, dynamic> request) {
       ymax <= ymin) {
     return [];
   }
+  if (request['kind'] == 'vertical') {
+    try {
+      final x = evaluateDouble(ast, angleMode: angle);
+      return x >= xmin && x <= xmax
+          ? [
+              [
+                [x, ymin],
+                [x, ymax],
+              ],
+            ]
+          : [];
+    } catch (_) {
+      return [];
+    }
+  }
   var evaluations = 0;
   double? at(double x) {
     if (++evaluations > 12000) return null;
@@ -127,6 +142,7 @@ CurveBatch sampleCurves(Map<String, dynamic> request) {
       ...request,
       'ast': curves[i]['ast'],
       'angle': curves[i]['angleMode'],
+      'kind': curves[i]['kind'],
     });
   }
   return result;
@@ -273,6 +289,7 @@ class _GraphScreenState extends State<GraphScreen> {
     final visible = widget.curves.where((curve) => curve['visible'] != false);
     if (visible.isEmpty) return null;
     final curve = visible.first;
+    if (curve['kind'] == 'vertical') return null;
     try {
       return evaluateDouble(
         Map<String, dynamic>.from(curve['ast'] as Map),
@@ -350,7 +367,8 @@ class _GraphScreenState extends State<GraphScreen> {
                             child: SingleChildScrollView(
                               scrollDirection: Axis.horizontal,
                               child: Math.tex(
-                                'y=${entry.value['latex']}',
+                                entry.value['label'] as String? ??
+                                    '${entry.value['kind'] == 'vertical' ? 'x' : 'y'}=${entry.value['latex']}',
                                 textStyle: TextStyle(
                                   fontSize: 17,
                                   color: entry.value['visible'] != false

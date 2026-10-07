@@ -109,6 +109,71 @@ void main() {
     },
   );
 
+  group('Plotting equation systems', () {
+    test(
+      'adds both equations atomically, without solving or altering history/draft',
+      () {
+        final m = model()..edit('3x+y=5;2x-y=3');
+        final revision = m.revision;
+        m.addDraftToGraph();
+        expect(m.curves, hasLength(2));
+        expect(m.latex, '3x+y=5;2x-y=3');
+        expect(m.revision, revision);
+        expect(m.history, isEmpty);
+        expect(api.calls, isEmpty);
+        m.curves.first['visible'] = false;
+        m.addDraftToGraph();
+        expect(m.curves, hasLength(2));
+        expect(m.curves.first['visible'], false);
+      },
+    );
+    test('capacity failure never adds only part of a system', () {
+      final m = model();
+      for (final expression in ['x', 'x^2', 'x^3']) {
+        m.edit(expression);
+        m.addDraftToGraph();
+      }
+      final before = copyMap({'curves': m.curves});
+      m.edit('3x+y=5;2x-y=3');
+      expect(m.addDraftToGraph, throwsException);
+      expect(m.curves, before['curves']);
+    });
+    test('an unsupported later row leaves previous curves intact', () {
+      final m = model()..edit('x');
+      m.addDraftToGraph();
+      m.edit('3x+y=5;x^2+y^2=1');
+      expect(m.addDraftToGraph, throwsException);
+      expect(m.curves, hasLength(1));
+    });
+    test(
+      'duplicates inside the same system count once, and old curves remain compatible',
+      () {
+        final m = model()..edit('y=x;y=x');
+        m.curves.add({
+          'ast': {'type': 'symbol', 'name': 'x'},
+          'latex': 'x',
+          'angleMode': 'rad',
+        });
+        m.addDraftToGraph();
+        expect(m.curves, hasLength(1));
+        m.edit('x=2;y=2');
+        m.addDraftToGraph();
+        expect(m.curves, hasLength(3));
+      },
+    );
+    test('equation labels and vertical geometry survive reopening', () async {
+      FlutterSecureStorage.setMockInitialValues({});
+      final m = model()..edit('x=2;3x+y=5');
+      m.addDraftToGraph();
+      await m.save();
+      final reopened = AppModel(store: store);
+      addTearDown(reopened.dispose);
+      await reopened.load();
+      expect(reopened.curves, m.curves);
+      expect(reopened.curves.first['kind'], 'vertical');
+    });
+  });
+
   group('Confirmed expression completions', () {
     test(
       'dictation repair preserves mode, blocks stale proposals and never calculates',
