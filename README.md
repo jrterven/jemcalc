@@ -18,11 +18,16 @@
 
 ![Calculadora con teclado visual, resultado e historial](docs/screenshots/teclado.png)
 
-Jem Calc combina una interfaz Flutter con un editor matemático visual, aritmética exacta local, cálculo simbólico mediante SymPy y gráficas interactivas. Comparte la interfaz y el motor matemático entre las tres plataformas, con una paleta roja y temas claro y oscuro.
+Jem Calc combina una interfaz Flutter con un editor matemático visual, aritmética exacta local, cálculo simbólico mediante SymPy y gráficas interactivas. Comparte la interfaz y el motor matemático entre las tres plataformas, con acentos rojos y temas claro y oscuro. El tema oscuro usa fondo negro y superficies grises neutras; las gráficas distinguen las curvas con rojo, azul, verde y ámbar.
 
 **Los resultados los calcula un motor matemático determinista.** La IA reconoce e interpreta la entrada: propone una expresión editable y el usuario pulsa **Resolver** para calcularla. Un LLM nunca sustituye al motor de cálculo.
 
 El [piloto alojado](https://calc.jemailabs.com) requiere una clave de acceso. Las apps Android/iOS pueden usar `https://calc.jemailabs.com/api` con su token y una conexión a Internet, sin USB ni una Mac encendida. Este repositorio no incluye las credenciales del servicio.
+
+<p align="center">
+  <img src="docs/screenshots/tema-oscuro.png" alt="Calculadora con fondo negro, teclas grises y acentos rojos" width="300">
+  <img src="docs/screenshots/graficas-oscuras.png" alt="Cuatro curvas de colores distintos sobre fondo negro" width="300">
+</p>
 
 ## Completar ecuaciones
 
@@ -79,7 +84,7 @@ Escribe una función como `x^2`, `sin(x)` o `y=x+1`, una ecuación lineal como `
 
 La casilla de cada curva permite ocultarla y volver a mostrarla. El pequeño bote de basura la elimina de la gráfica. Usa **+** para volver al editor y añadir otra función. Las coordenadas y valores de la gráfica son aproximados.
 
-![Gráfica de x al cuadrado y x, con casillas de visibilidad y cursores A y B](docs/screenshots/graficas.png)
+![Cuatro curvas con rojo, azul, verde y ámbar, casillas de visibilidad y cursores A y B](docs/screenshots/graficas.png)
 
 <p align="center">
   <img src="docs/screenshots/sistema-lineal.png" alt="Sistema 3x+y=5 y 2x-y=3 graficado como dos rectas en el móvil" width="320">
@@ -167,7 +172,7 @@ El backend de desarrollo requiere que la Mac siga encendida y sea accesible para
 
 ### Instalar el APK Android sin herramientas de desarrollo
 
-Desde el teléfono, abre [Instalar Jem Calc para Android](https://calc.jemailabs.com/android). Introduce la clave del piloto si se solicita; al iniciar sesión volverás a la página de instalación. Pulsa **Descargar APK** (versión 1.0.2, compilación 4), abre el archivo y, si Android lo solicita, permite a ese navegador instalar aplicaciones de esa fuente. No requiere depuración USB. Si lo abriste dentro de otra app y no comienza la descarga, abre la página en Chrome.
+Desde el teléfono, abre [Instalar Jem Calc para Android](https://calc.jemailabs.com/android). Introduce la clave del piloto si se solicita; al iniciar sesión volverás a la página de instalación. Pulsa **Descargar APK** (versión 1.0.3, compilación 5), abre el archivo y, si Android lo solicita, permite a ese navegador instalar aplicaciones de esa fuente. No requiere depuración USB. Si lo abriste dentro de otra app y no comienza la descarga, abre la página en Chrome.
 
 La app ya apunta al servidor alojado. Introduce el token del piloto facilitado por el administrador en **Configuración → Token del piloto**, guarda los cambios y prueba `x+1=2`. El token nativo es diferente de la clave de acceso de la web y no está dentro del instalador.
 
@@ -183,7 +188,7 @@ keyPassword=TU_CONTRASENA_PRIVADA
 Desde `app/`, con los certificados opcionales `assets/pilot/server.pem` y `server.der` guardados temporalmente fuera de los assets para una distribución de producción:
 
 ```sh
-flutter build apk --release --build-name=1.0.2 --build-number=4 \
+flutter build apk --release --build-name=1.0.3 --build-number=5 \
   --dart-define=PILOT_URL=https://calc.jemailabs.com/api
 ```
 

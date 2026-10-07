@@ -62,7 +62,7 @@ mf.addEventListener('focus',scheduleKeyboardSync);
 mf.menuItems=[];mf.smartFence=true;mf.inlineShortcuts={...mf.inlineShortcuts,sen:'\\sin',tg:'\\tan'};
 window.configure=function(c){
  const st=document.documentElement.style;const dark=c.dark;
- const p=c.palette||{bg:dark?'#23161a':'#fff3f1',fg:dark?'#f8e9ec':'#2d1b20',key:dark?'#362329':'#ffffff',line:dark?'#52343d':'#edd7d8',accent:dark?'#ff8998':'#b9263d',onAccent:dark?'#510c1e':'#ffffff'};
+ const p=c.palette||{bg:dark?'#000000':'#fff3f1',fg:dark?'#f2f2f2':'#2d1b20',key:dark?'#242424':'#ffffff',line:dark?'#3a3a3a':'#edd7d8',accent:dark?'#ff8998':'#b9263d',onAccent:dark?'#510c1e':'#ffffff'};
  for(const name of ['bg','fg','key','line','accent']){if(/^#[0-9a-f]{6}$/i.test(p[name]||''))st.setProperty('--'+name,p[name]);}
  if(/^#[0-9a-f]{6}$/i.test(p.onAccent||''))st.setProperty('--on-accent',p.onAccent);
  st.colorScheme=dark?'dark':'light';

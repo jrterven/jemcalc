@@ -11,8 +11,8 @@
     "ruby": "#B9263D",
     "light_surface": "#FFFBFA",
     "light_editor": "#FFF3F1",
-    "dark_surface": "#1A1114",
-    "dark_editor": "#23161A",
+    "dark_surface": "#000000",
+    "dark_editor": "#000000",
     "dark_accent": "#FF8998"
   }
 }
