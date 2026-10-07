@@ -24,6 +24,18 @@ Jem Calc combina una interfaz Flutter con un editor matemático visual, aritmét
 
 El [piloto alojado](https://calc.jemailabs.com) requiere una clave de acceso. Las apps Android/iOS pueden usar `https://calc.jemailabs.com/api` con su token y una conexión a Internet, sin USB ni una Mac encendida. Este repositorio no incluye las credenciales del servicio.
 
+## Completar ecuaciones
+
+![Sugerencia para completar una ecuación](docs/screenshots/completar.png)
+
+El teclado **Cálculo** incluye `dx`, `dy`, `dz` y `dt`. En cualquier modo, la app revisa la estructura de la expresión y muestra acciones cuando reconoce una parte faltante:
+
+- **Añadir dx/dy…**: integral con integrando completo y sin diferencial. Si aparecen varias variables, puedes elegir entre ellas.
+- **Cerrar**: paréntesis, corchetes o llaves sin cierre, cuando añadirlo deja una expresión válida.
+- **Completar**: espacios vacíos en fracciones, exponentes, funciones, lados de ecuaciones, límites o extremos de una integral. Abre el teclado y selecciona el primer espacio pendiente; tú introduces el valor.
+
+Las sugerencias son reglas locales y deterministas; no llaman a un modelo ni resuelven la operación. El reconocimiento de voz/foto puede emitir avisos adicionales. Una sugerencia solo se aplica al tocarla y nunca inventa números: hay que pulsar **Resolver** para calcular. Al corregir durante el dictado se conserva la sesión y se descartan transcripciones que correspondan a una revisión anterior. En expresiones ambiguas o sintaxis todavía no soportada se conserva el aviso para edición manual.
+
 ## Capturas y usos
 
 Las capturas muestran la aplicación web real con su paleta roja y ecuaciones de ejemplo; la vista compacta usa un ancho de 390 px. Los cuatro modos de entrada están disponibles desde los botones inferiores.
@@ -151,7 +163,7 @@ El backend de desarrollo requiere que la Mac siga encendida y sea accesible para
 
 ### Instalar el APK Android sin herramientas de desarrollo
 
-Desde el teléfono, abre [Instalar Jem Calc para Android](https://calc.jemailabs.com/android). Introduce la clave del piloto si se solicita; al iniciar sesión volverás a la página de instalación. Pulsa **Descargar APK** (versión 1.0.0, compilación 2), abre el archivo y, si Android lo solicita, permite a ese navegador instalar aplicaciones de esa fuente. No requiere depuración USB. Si lo abriste dentro de otra app y no comienza la descarga, abre la página en Chrome.
+Desde el teléfono, abre [Instalar Jem Calc para Android](https://calc.jemailabs.com/android). Introduce la clave del piloto si se solicita; al iniciar sesión volverás a la página de instalación. Pulsa **Descargar APK** (versión 1.0.1, compilación 3), abre el archivo y, si Android lo solicita, permite a ese navegador instalar aplicaciones de esa fuente. No requiere depuración USB. Si lo abriste dentro de otra app y no comienza la descarga, abre la página en Chrome.
 
 La app ya apunta al servidor alojado. Introduce el token del piloto facilitado por el administrador en **Configuración → Token del piloto**, guarda los cambios y prueba `x+1=2`. El token nativo es diferente de la clave de acceso de la web y no está dentro del instalador.
 
@@ -167,7 +179,7 @@ keyPassword=TU_CONTRASENA_PRIVADA
 Desde `app/`, con los certificados opcionales `assets/pilot/server.pem` y `server.der` guardados temporalmente fuera de los assets para una distribución de producción:
 
 ```sh
-flutter build apk --release --build-name=1.0.0 --build-number=2 \
+flutter build apk --release --build-name=1.0.1 --build-number=3 \
   --dart-define=PILOT_URL=https://calc.jemailabs.com/api
 ```
 

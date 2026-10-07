@@ -210,6 +210,53 @@ try {
     await page.screenshot({ path: join(output, 'editor-scientific-mobile.png') });
   });
 
+
+  await check('calculus differentials fit on mobile and append to a dictated integral', async () => {
+    await toolbar().getByText('Cálculo', { exact: true }).click();
+    for (const variable of ['x', 'y', 'z', 't']) {
+      await page.evaluate(v => window.setDraft('\\int ' + v + '^2'), variable);
+      const before = await page.evaluate(() => jemEvents.filter(e => e.type === 'input').length);
+      const key = visibleKey('d' + variable);
+      await key.click();
+      const latex = await value();
+      assert(latex.includes('\\mathrm{d}' + variable), latex);
+      await page.waitForFunction(before => jemEvents.filter(e => e.type === 'input').length > before, before);
+      const fit = await key.evaluate(el => {
+        const r = document.createRange(); r.selectNodeContents(el);
+        return r.getBoundingClientRect().width < el.getBoundingClientRect().width - 6;
+      });
+      assert(fit);
+    }
+    assert.equal(await page.locator('.MLK__layer.is-visible .MLK__row').count(), 5);
+    await page.screenshot({ path: join(output, 'editor-calculus-differentials.png') });
+  });
+
+  await check('confirmed missing denominator focuses its slot; later configure preserves caret', async () => {
+    await toolbar().getByText('Básico', { exact: true }).click();
+    await config({ latex: '\\frac{1}{\\placeholder{}}', focusRequest: 1 });
+    await visibleKey('2').click();
+    assert.equal(await value(), '\\frac12');
+    await config({ focusRequest: 1 });
+    await visibleKey('3').click();
+    assert.equal(await value(), '\\frac{1}{23}');
+  });
+
+  await check('multiple empty slots focus the first, and explicit completion focuses the next', async () => {
+    await config({ latex: '\\frac{\\placeholder{}}{\\placeholder{}}', focusRequest: 2 });
+    await visibleKey('1').click();
+    assert.equal(await value(), '\\frac{1}{\\placeholder{}}');
+    await config({ focusRequest: 3 });
+    await visibleKey('2').click();
+    assert.equal(await value(), '\\frac12');
+  });
+
+  await check('hidden editor does not consume the slot-focus request', async () => {
+    await config({ keyboard: false, latex: 'x^{\\placeholder{}}', focusRequest: 4 });
+    await config({ keyboard: true, focusRequest: 4 });
+    await visibleKey('2').click();
+    assert.equal(await value(), 'x^2');
+  });
+
   await check('host setDraft never echoes an input event', async () => {
     const before = await page.evaluate(() => jemEvents.filter(e => e.type === 'input').length);
     await page.evaluate(() => window.setDraft('y+9'));

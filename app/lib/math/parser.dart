@@ -51,6 +51,7 @@ String _normalize(String input) {
     },
   );
   s = s.replaceAll(r'\dfrac', r'\frac').replaceAll(r'\tfrac', r'\frac');
+  s = _expandFractionArguments(s);
   s = s.replaceAll(r'\rightarrow', r'\to');
   s = s
       .replaceAll('−', '-')
@@ -67,6 +68,44 @@ String _normalize(String input) {
     );
   }
   return s.trim();
+}
+
+// MathLive omits braces around single TeX atoms: \frac12 means 1/2,
+// not one argument containing the decimal integer 12. Preserve TeX boundaries
+// before the expression lexer combines adjacent digits into numbers.
+String _expandFractionArguments(String source) {
+  final matches = RegExp(r'\\frac(?![a-zA-Z])').allMatches(source).toList();
+  var s = source;
+  for (final match in matches.reversed) {
+    var offset = match.end;
+    final arguments = <String>[];
+    for (var arg = 0; arg < 2; arg++) {
+      while (offset < s.length && s[offset].trim().isEmpty) {
+        offset++;
+      }
+      if (offset == s.length) break;
+      if (s[offset] == '{') {
+        final start = offset++;
+        var depth = 1;
+        while (offset < s.length && depth > 0) {
+          if (s[offset] == '{') depth++;
+          if (s[offset] == '}') depth--;
+          offset++;
+        }
+        if (depth != 0) break;
+        arguments.add(s.substring(start, offset));
+      } else if (RegExp(r'[a-zA-Z0-9]').hasMatch(s[offset])) {
+        arguments.add('{${s[offset++]}}');
+      } else {
+        // Keep complex command arguments with their original parser behavior.
+        break;
+      }
+    }
+    if (arguments.length == 2) {
+      s = '${s.substring(0, match.end)}${arguments.join()}${s.substring(offset)}';
+    }
+  }
+  return s;
 }
 
 MathNode _parseSource(String source, int depth) {

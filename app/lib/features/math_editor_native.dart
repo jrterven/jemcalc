@@ -6,6 +6,7 @@ import '../core/palette.dart';
 class MathEditor extends StatefulWidget {
   const MathEditor({
     super.key,
+    this.focusRequest = 0,
     required this.latex,
     required this.language,
     required this.showKeyboard,
@@ -13,6 +14,7 @@ class MathEditor extends StatefulWidget {
     required this.onSubmit,
   });
   final String latex, language;
+  final int focusRequest;
   final bool showKeyboard;
   final ValueChanged<String> onChanged;
   final VoidCallback onSubmit;
@@ -87,6 +89,7 @@ class _MathEditorState extends State<MathEditor> {
       'palette': JemPalette.editor(Theme.of(context).colorScheme),
       'language': widget.language,
       'keyboard': widget.showKeyboard,
+      'focusRequest': widget.focusRequest,
       if (restoreDraft) 'latex': widget.latex,
     };
     if (restoreDraft) _browserLatex = widget.latex;

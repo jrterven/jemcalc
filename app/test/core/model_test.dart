@@ -109,6 +109,64 @@ void main() {
     },
   );
 
+  group('Confirmed expression completions', () {
+    test(
+      'dictation repair preserves mode, blocks stale proposals and never calculates',
+      () {
+        final m = model()..setMode(InputMode.voice);
+        m.acceptProposal(r'\int x^2', m.revision);
+        final prior = m.revision;
+        final hint = m.completionSuggestions.single;
+        final edits = <String>[];
+        m.onDraftChanged = (source, _) => edits.add(source);
+        expect(m.latex, r'\int x^2'); // Reading suggestions does not edit.
+        expect(m.applyCompletion(hint), true);
+        expect(m.mode, InputMode.voice);
+        expect(m.revision, prior + 1);
+        expect(edits, ['manual']);
+        expect(m.acceptProposal(r'\int x^2', prior), false);
+        expect(m.applyCompletion(hint), false);
+        expect(m.latex, contains(r'\mathrm{d}x'));
+        expect(api.calls, isEmpty);
+        expect(m.history, isEmpty);
+      },
+    );
+    test('stale hint cannot overwrite an edited draft', () {
+      final m = model()..edit('(x+1');
+      final hint = m.completionSuggestions.single;
+      m.edit('y+2');
+      expect(m.applyCompletion(hint), false);
+      expect(m.latex, 'y+2');
+    });
+    test(
+      'empty slot restores keyboard and asks editor to focus without guessing',
+      () {
+        final m = model()
+          ..edit(r'\frac{1}{}')
+          ..expand();
+        expect(m.applyCompletion(m.completionSuggestions.single), true);
+        expect(m.editorFocusRequest, 1);
+        expect(m.maximized, false);
+        expect(m.latex, r'\frac{1}{\placeholder{}}');
+        expect(api.calls, isEmpty);
+      },
+    );
+    test(
+      'a repaired integral is submitted to the CAS only on Resolve',
+      () async {
+        final m = model()..edit(r'\int_0^1 x^2');
+        m.applyCompletion(m.completionSuggestions.single);
+        expect(api.calls, isEmpty);
+        final pending = m.calculate();
+        expect(api.calls.single.body['ast']['type'], 'integral');
+        expect(api.calls.single.body['ast']['variable'], 'x');
+        api.calls.single.response.complete(answer('1/3'));
+        await pending;
+        expect(m.result?['text'], '1/3');
+      },
+    );
+  });
+
   group('Keyboard restoration', () {
     test('returning from handwriting restores the keyboard and draft', () {
       final m = model()..edit('y=2x+1');
@@ -201,9 +259,7 @@ void main() {
       () async {
         final m = model()..edit('x+1');
         final computation = m.calculate();
-        api.calls.single.response.completeError(
-          ClientException('offline'),
-        );
+        api.calls.single.response.completeError(ClientException('offline'));
         await computation;
         expect(m.error, contains('sin conexión'));
         expect(m.busy, isFalse);

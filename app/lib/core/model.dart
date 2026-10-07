@@ -7,6 +7,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../math/ast.dart';
 import '../math/parser.dart';
 import '../math/evaluator.dart';
+import '../math/completion.dart';
 import 'api.dart';
 import 'draft.dart';
 import 'store.dart';
@@ -50,6 +51,28 @@ class AppModel extends ChangeNotifier {
   PilotApi? _api;
   String get latex => draft.latex;
   int get revision => draft.revision;
+  int editorFocusRequest = 0;
+  List<ExpressionCompletion> get completionSuggestions =>
+      expressionCompletions(latex, preferredVariable: variable);
+
+  bool applyCompletion(ExpressionCompletion suggestion) {
+    if (_disposed || suggestion.source != latex) return false;
+    if (!completionSuggestions.any(
+      (current) =>
+          current.latex == suggestion.latex &&
+          current.focusSlot == suggestion.focusSlot,
+    )) {
+      return false;
+    }
+    if (suggestion.focusSlot) {
+      editorFocusRequest++;
+      if (mode == InputMode.keyboard) maximized = false;
+    }
+    // A confirmed suggestion is a manual revision, including during live dictation.
+    edit(suggestion.latex);
+    return true;
+  }
+
   int _calculationRevision = 0;
   int _inkRevision = 0, _photoRevision = 0;
   Strings get s => Strings(language);

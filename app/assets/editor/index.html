@@ -11,7 +11,7 @@ body{display:flex;flex-direction:column;overflow-y:auto}#field-wrap{padding:8px 
 </style></head><body><div id="field-wrap"><math-field id="mf" aria-label="Equation" inputmode="none" math-virtual-keyboard-policy="manual"></math-field></div><div id="keyboard"></div>
 <script>
 MathfieldElement.fontsDirectory='../mathlive/fonts';MathfieldElement.soundsDirectory=null;
-const mf=document.getElementById('mf');const keyboard=document.getElementById('keyboard');let suppress=false;let ready=false;let lastLanguage=null;let keyboardWanted=false;
+const mf=document.getElementById('mf');const keyboard=document.getElementById('keyboard');let suppress=false;let ready=false;let lastLanguage=null;let keyboardWanted=false;let lastFocusRequest=0;
 function send(data){if(window.JemBridge)JemBridge.postMessage(JSON.stringify(data));else if(parent!==window)parent.postMessage(JSON.stringify({channel:'jem-editor',...data}),location.origin);}
 // Keep the web iframe's keyboard inside its own editor instead of proxying it to Flutter's document.
 mf.mathVirtualKeyboardPolicy=parent===window?'manual':'sandboxed';
@@ -43,6 +43,7 @@ function layouts(es){return [
   {latex:'\\int_{#?}^{#?} #0 \\,\\mathrm{d}x',label:'∫ₐᵦ'},
   {latex:'\\lim_{x\\to #?} #0',label:'lim'}],
  ['x','y','z','\\infty'],
+ [key('dx','\\,\\mathrm{d}x'),key('dy','\\,\\mathrm{d}y'),key('dz','\\,\\mathrm{d}z'),key('dt','\\,\\mathrm{d}t')],
  ['(',')','=',{latex:';',label:es?'fila':'row'}],
  [{label:'↶',command:'undo'},{label:'↷',command:'redo'},
   {label:'←',command:'moveToPreviousChar'},{label:'→',command:'moveToNextChar'}]]}
@@ -71,6 +72,10 @@ window.configure=function(c){
  if(!keyboardWanted)window.mathVirtualKeyboard.hide({animate:false});
  scheduleKeyboardSync();
  if(c.latex!==undefined && c.latex!==mf.value){suppress=true;mf.setValue(c.latex,{silenceNotifications:true});suppress=false;}
+ // Only a confirmed completion requests focus. Repeated model updates preserve the caret.
+ if(keyboardWanted && c.focusRequest>0 && c.focusRequest!==lastFocusRequest){
+  lastFocusRequest=c.focusRequest;mf.focus();mf.position=0;mf.executeCommand('moveToNextPlaceholder');
+ }
 };
 window.setDraft=function(latex){suppress=true;mf.setValue(latex,{silenceNotifications:true});mf.position=-1;suppress=false;};
 window.insertLatex=function(latex){mf.focus();mf.insert(latex);};

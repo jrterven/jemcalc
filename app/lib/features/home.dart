@@ -10,6 +10,8 @@ import 'ink_pad.dart';
 import 'math_editor.dart';
 import 'settings.dart';
 import 'voice_panel.dart';
+import 'completion_hint.dart';
+import 'equation_editor_sheet.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -89,6 +91,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final s = m.s;
     final colors = Theme.of(context).colorScheme;
     final dark = Theme.of(context).brightness == Brightness.dark;
+    final completionSuggestions = m.completionSuggestions;
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: (dark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark)
           .copyWith(
@@ -202,6 +205,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                                                 : 120,
                                             child: MathEditor(
                                               key: _editorKey,
+                                              focusRequest:
+                                                  m.editorFocusRequest,
                                               latex: m.latex,
                                               language: m.language,
                                               showKeyboard:
@@ -215,9 +220,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                                         ),
                                         if (m.result != null && !m.maximized)
                                           ResultCard(model: m),
-                                        if (m.error != null ||
-                                            m.notice != null ||
-                                            m.ambiguities.isNotEmpty)
+                                        if (completionSuggestions.isNotEmpty)
+                                          CompletionHint(
+                                            suggestions: completionSuggestions,
+                                            strings: s,
+                                            onSelected: (suggestion) {
+                                              if (m.applyCompletion(
+                                                    suggestion,
+                                                  ) &&
+                                                  suggestion.focusSlot &&
+                                                  m.mode !=
+                                                      InputMode.keyboard) {
+                                                showEquationEditor(context, m);
+                                              }
+                                            },
+                                          ),
+                                        if (m.ambiguities.isNotEmpty ||
+                                            (completionSuggestions.isEmpty &&
+                                                (m.error != null ||
+                                                    m.notice != null)))
                                           ConstrainedBox(
                                             constraints: const BoxConstraints(
                                               maxHeight: 78,
