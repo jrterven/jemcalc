@@ -1,10 +1,10 @@
 <!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><meta http-equiv="Content-Security-Policy" content="default-src 'self' file: data:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' file: data:; connect-src 'none'">
 <link rel="stylesheet" href="../mathlive/mathlive-fonts.css"><script src="../mathlive/mathlive.min.js"></script><script>MathfieldElement.fontsDirectory="../mathlive/fonts";MathfieldElement.soundsDirectory=null;</script>
 <style>
-:root { color-scheme:light; --bg:#fff3f1;--fg:#2d1b20;--accent:#b9263d;--on-accent:#ffffff;--key:#ffffff;--line:#edd7d8; }
+:root { color-scheme:light; --bg:#fff3f1;--fg:#2d1b20;--accent:#b9263d;--on-accent:#ffffff;--key:#ffffff;--key-hover:#fff0f2;--key-pressed:#ffdce2;--line:#edd7d8; }
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--fg);font-family:-apple-system,system-ui,sans-serif}
 body{display:flex;flex-direction:column;overflow-y:auto}#field-wrap{padding:8px 6px;min-height:96px;display:flex;align-items:center;flex:1;overflow:auto}math-field{width:100%;min-width:0;border:0;outline:none;background:transparent;color:var(--fg);font-size:30px;padding:6px;--caret-color:var(--accent);--selection-background-color:#c42d4340;--placeholder-color:var(--accent);--contains-highlight-background-color:#c42d4320;--smart-fence-color:var(--accent)}math-field::part(virtual-keyboard-toggle),math-field::part(menu-toggle){display:none}
-#keyboard{width:100%;height:280px;flex-shrink:0;position:relative;--keyboard-background:var(--bg);--keyboard-toolbar-background:var(--bg);--keycap-background:var(--key);--keycap-text:var(--fg);--keycap-secondary-background:var(--key);--keycap-secondary-text:var(--fg);--keycap-primary-background:var(--accent);--keycap-primary-text:var(--on-accent);--keycap-height:46px;--keycap-width:calc((100cqw - 24px)/4);--keyboard-toolbar-font-size:14px;--keyboard-toolbar-text-active:var(--accent);--keycap-gap:4px;--keycap-font-size:22px;--keyboard-padding-bottom:4px;--keyboard-padding-top:4px;--keycap-border:1px solid var(--line);--keycap-border-radius:12px;--keycap-shadow:none;--keyboard-toolbar-text:var(--fg)}
+#keyboard{width:100%;height:280px;flex-shrink:0;position:relative;--keyboard-background:var(--bg);--keyboard-toolbar-background:var(--bg);--keycap-background:var(--key);--keycap-text:var(--fg);--keycap-background-hover:var(--key-hover);--keycap-text-hover:var(--fg);--keycap-background-active:var(--key-pressed);--keycap-text-active:var(--fg);--keycap-background-pressed:var(--key-pressed);--keycap-text-pressed:var(--fg);--keycap-secondary-background:var(--key);--keycap-secondary-background-hover:var(--key-hover);--keycap-secondary-text:var(--fg);--keycap-primary-background:var(--accent);--keycap-primary-background-hover:var(--accent);--keycap-primary-text:var(--on-accent);--keycap-height:46px;--keycap-width:calc((100cqw - 24px)/4);--keyboard-toolbar-font-size:14px;--keyboard-toolbar-text-active:var(--accent);--keycap-gap:4px;--keycap-font-size:22px;--keyboard-padding-bottom:4px;--keyboard-padding-top:4px;--keycap-border:1px solid var(--line);--keycap-border-radius:12px;--keycap-shadow:none;--keyboard-toolbar-text:var(--fg)}
 #keyboard .MLK__toolbar>.left{column-gap:8px}
 #keyboard.hidden{display:none}body.compact #field-wrap{min-height:60px;padding:4px 8px}body.compact math-field{font-size:27px}
 @media(max-height:420px){#field-wrap{min-height:64px;padding:0 6px}}
@@ -18,15 +18,19 @@ mf.mathVirtualKeyboardPolicy=parent===window?'manual':'sandboxed';
 window.mathVirtualKeyboard.container=keyboard;window.mathVirtualKeyboard.editToolbar='none';window.mathVirtualKeyboard.targetOrigin='*';
 window.mathVirtualKeyboard.addEventListener('geometrychange',()=>{const h=window.mathVirtualKeyboard.boundingRect.height;if(h>0)keyboard.style.height=h+'px';});
 function key(label, latex=label){return {label,latex};}
+// Keep the label compact and put the caret in the function's argument.
+function functionKey(latex){return {latex,label:latex.slice(1),insert:latex+'\\left(#0\\right?'};}
+// typedText uses MathLive's smart-fence behavior when closing a function.
+function fenceKey(label){return {label,command:['typedText',label,{simulateKeystroke:true}]};}
 function layouts(es){return [
  {label:es?'Básico':'Basic',tooltip:'123',rows:[
- [{label:'C',command:'deleteAll'},key('('),key(')'),{label:'⌫',command:'deleteBackward'}],
+ [{label:'C',command:'deleteAll'},fenceKey('('),fenceKey(')'),{label:'⌫',command:'deleteBackward'}],
  [key('7'),key('8'),key('9'),key('÷','\\div')],
  [key('4'),key('5'),key('6'),key('×','\\times')],
  [key('1'),key('2'),key('3'),key('−','-')],
  [key('0'),key('.'),key('='),key('+')]]},
  {label:es?'Científico':'Scientific',rows:[
- ['\\sin','\\cos','\\tan',{label:'⌫',command:'deleteBackward'}],
+ [functionKey('\\sin'),functionKey('\\cos'),functionKey('\\tan'),{label:'⌫',command:'deleteBackward'}],
  [{latex:'\\arcsin',label:'sin⁻¹',class:'small'},
   {latex:'\\arccos',label:'cos⁻¹',class:'small'},
   {latex:'\\arctan',label:'tan⁻¹',class:'small'},
@@ -44,7 +48,7 @@ function layouts(es){return [
   {latex:'\\lim_{x\\to #?} #0',label:'lim'}],
  ['x','y','z','\\infty'],
  [key('dx','\\,\\mathrm{d}x'),key('dy','\\,\\mathrm{d}y'),key('dz','\\,\\mathrm{d}z'),key('dt','\\,\\mathrm{d}t')],
- ['(',')','=',{latex:';',label:es?'fila':'row'}],
+ [fenceKey('('),fenceKey(')'),'=',{latex:';',label:es?'fila':'row'}],
  [{label:'↶',command:'undo'},{label:'↷',command:'redo'},
   {label:'←',command:'moveToPreviousChar'},{label:'→',command:'moveToNextChar'}]]}
 ];}
@@ -65,6 +69,8 @@ window.configure=function(c){
  const p=c.palette||{bg:dark?'#000000':'#fff3f1',fg:dark?'#f2f2f2':'#2d1b20',key:dark?'#242424':'#ffffff',line:dark?'#3a3a3a':'#edd7d8',accent:dark?'#ff8998':'#b9263d',onAccent:dark?'#510c1e':'#ffffff'};
  for(const name of ['bg','fg','key','line','accent']){if(/^#[0-9a-f]{6}$/i.test(p[name]||''))st.setProperty('--'+name,p[name]);}
  if(/^#[0-9a-f]{6}$/i.test(p.onAccent||''))st.setProperty('--on-accent',p.onAccent);
+ st.setProperty('--key-hover',p.keyHover||(dark?'#303030':'#fff0f2'));
+ st.setProperty('--key-pressed',p.keyPressed||(dark?'#484848':'#ffdce2'));
  st.colorScheme=dark?'dark':'light';
  if(lastLanguage!==c.language){MathfieldElement.locale=c.language||'es';mf.setAttribute('aria-label',c.language==='es'?'Ecuación':'Equation');window.mathVirtualKeyboard.layouts=layouts(c.language==='es');lastLanguage=c.language;}
  keyboardWanted=Boolean(c.keyboard);

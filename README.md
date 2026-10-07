@@ -47,7 +47,7 @@ Las capturas muestran la aplicación web real con su paleta roja y ecuaciones de
 
 ### 1. Teclado: cálculo científico y simbólico
 
-Introduce fracciones, raíces, potencias y funciones con las pestañas **Básico**, **Científico** y **Cálculo**. Selecciona la operación y pulsa **Resolver** o Enter. La pantalla de la ecuación se puede maximizar.
+Introduce fracciones, raíces, potencias y funciones con las pestañas **Básico**, **Científico** y **Cálculo**. Selecciona la operación y pulsa **Resolver** o Enter. La pantalla de la ecuación se puede maximizar. Las teclas `sin`, `cos` y `tan` abren el argumento automáticamente y dejan el cursor dentro; `)` permite continuar fuera de la función. Las teclas pulsadas usan un resaltado suave y legible en el tema claro.
 
 - **Calcular** evalúa aritmética racional exacta o aproximaciones numéricas locales.
 - **Exacto**, **Simplificar**, **Expandir** y **Factorizar** usan el CAS.
@@ -172,7 +172,7 @@ El backend de desarrollo requiere que la Mac siga encendida y sea accesible para
 
 ### Instalar el APK Android sin herramientas de desarrollo
 
-Desde el teléfono, abre [Instalar Jem Calc para Android](https://calc.jemailabs.com/android). Introduce la clave del piloto si se solicita; al iniciar sesión volverás a la página de instalación. Pulsa **Descargar APK** (versión 1.0.3, compilación 5), abre el archivo y, si Android lo solicita, permite a ese navegador instalar aplicaciones de esa fuente. No requiere depuración USB. Si lo abriste dentro de otra app y no comienza la descarga, abre la página en Chrome.
+Desde el teléfono, abre [Instalar Jem Calc para Android](https://calc.jemailabs.com/android). Introduce la clave del piloto si se solicita; al iniciar sesión volverás a la página de instalación. Pulsa **Descargar APK** (versión 1.0.4, compilación 6), abre el archivo y, si Android lo solicita, permite a ese navegador instalar aplicaciones de esa fuente. No requiere depuración USB. Si lo abriste dentro de otra app y no comienza la descarga, abre la página en Chrome.
 
 La app ya apunta al servidor alojado. Introduce el token del piloto facilitado por el administrador en **Configuración → Token del piloto**, guarda los cambios y prueba `x+1=2`. El token nativo es diferente de la clave de acceso de la web y no está dentro del instalador.
 
@@ -188,7 +188,7 @@ keyPassword=TU_CONTRASENA_PRIVADA
 Desde `app/`, con los certificados opcionales `assets/pilot/server.pem` y `server.der` guardados temporalmente fuera de los assets para una distribución de producción:
 
 ```sh
-flutter build apk --release --build-name=1.0.3 --build-number=5 \
+flutter build apk --release --build-name=1.0.4 --build-number=6 \
   --dart-define=PILOT_URL=https://calc.jemailabs.com/api
 ```
 

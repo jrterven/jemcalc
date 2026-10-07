@@ -73,7 +73,10 @@ async function check(name, run) {
   catch (e) { results.push({ name, status: 'failed', message: e.message }); }
 }
 // CSS labels come from the inspected real MathLive accessibility tree.
-const visibleKey = label => page.locator(`.MLK__layer.is-visible [aria-label=${JSON.stringify(label)}]`);
+const visibleKey = label => {
+  const aria = ['\\sin','\\cos','\\tan'].includes(label) ? label.slice(1) : label;
+  return page.locator(`.MLK__layer.is-visible [aria-label=${JSON.stringify(aria)}]`);
+};
 const toolbar = () => page.locator('.MLK__layer.is-visible .MLK__toolbar');
 const value = () => page.locator('#mf').evaluate(el => el.value);
 const submits = () => page.evaluate(() => jemEvents.filter(e => e.type === 'submit').length);
@@ -210,6 +213,64 @@ try {
     await page.screenshot({ path: join(output, 'editor-scientific-mobile.png') });
   });
 
+
+  await check('trig keys place the caret inside the argument and support nesting', async () => {
+    await config({ dark: false, latex: '' });
+    await scientificTab();
+    const expressions = [];
+    for (const fn of ['sin', 'cos', 'tan']) {
+      await page.evaluate(() => window.setDraft(''));
+      await visibleKey('\\' + fn).click();
+      await visibleKey('x').click();
+      const latex = await value();
+      assert.equal(latex, '\\' + fn + '\\left(x\\right)');
+      expressions.push(latex);
+    }
+    await page.evaluate(() => window.setDraft(''));
+    await visibleKey('\\sin').click();
+    await visibleKey('\\cos').click();
+    await visibleKey('x').click();
+    assert.equal(await value(), '\\sin\\left(\\cos\\left(x\\right)\\right)');
+    // Closing the generated pair must move out of it, not insert another pair.
+    await page.evaluate(() => window.setDraft(''));
+    await visibleKey('\\sin').click();await visibleKey('x').click();
+    await toolbar().getByText('Básico', {exact:true}).click();
+    await visibleKey(')').click();await visibleKey('+').click();await visibleKey('2').click();
+    assert.equal(await value(), '\\sin\\left(x\\right)+2');
+    await page.evaluate(() => window.setDraft(''));
+    for (const label of ['(', '1', '+', '2', ')', '×', '3']) await visibleKey(label).click();
+    assert.equal((await value()).replace(/\s+/g,''), '\\left(1+2\\right)\\times3');
+    await scientificTab();
+    return expressions;
+  });
+
+  await check('key feedback remains readable when the app and OS themes differ', async () => {
+    function rgb(css) { return css.match(/[\d.]+/g).slice(0,3).map(Number); }
+    function luminance(css) {
+      const c=rgb(css).map(v=>v/255).map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4);
+      return c[0]*.2126+c[1]*.7152+c[2]*.0722;
+    }
+    const observations=[];
+    for (const dark of [false,true]) {
+      await page.emulateMedia({colorScheme:dark?'light':'dark'});
+      await config({dark,latex:''});await scientificTab();
+      const key=visibleKey('\\sin');
+      const style=()=>key.evaluate(el=>{const s=getComputedStyle(el);return {bg:s.backgroundColor,fg:s.color};});
+      await key.hover();const hover=await style();
+      await page.mouse.down();const pressed=await style();
+      await page.screenshot({path:join(output,`editor-key-pressed-${dark?'dark':'light'}.png`)});
+      await page.mouse.up();const released=await style();
+      await page.mouse.move(0,0);
+      for(const state of [hover,pressed,released]) {
+        const [low,high]=[luminance(state.bg),luminance(state.fg)].sort((a,b)=>a-b);
+        assert((high+.05)/(low+.05)>=4.5, JSON.stringify({dark,state}));
+        if (!dark) assert(luminance(state.bg)>.6, JSON.stringify(state));
+      }
+      observations.push({dark,hover,pressed,released});
+    }
+    await page.emulateMedia({colorScheme:'light'});await config({dark:false,latex:''});
+    return observations;
+  });
 
   await check('calculus differentials fit on mobile and append to a dictated integral', async () => {
     await toolbar().getByText('Cálculo', { exact: true }).click();

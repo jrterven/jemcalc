@@ -93,6 +93,10 @@ abstract final class JemPalette {
             ? colors.surfaceContainerHigh
             : colors.surfaceContainerLowest,
       ),
+      'keyHover': colors.brightness == Brightness.dark ? '#303030' : '#fff0f2',
+      'keyPressed': colors.brightness == Brightness.dark
+          ? '#484848'
+          : '#ffdce2',
       'line': hex(colors.outlineVariant),
     };
   }
