@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Keep the approved square artwork within the adaptive icon's visible area. -->
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:inset="16.67%">
+    <bitmap
+        android:src="@drawable/jem_launcher_foreground"
+        android:gravity="fill"/>
+</inset>

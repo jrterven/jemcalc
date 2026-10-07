@@ -1,0 +1,18 @@
+{
+  "name": "Jem Calc",
+  "master": "jem-calc-logo.png",
+  "generation_tool": "built-in image_gen",
+  "approved_by_user": true,
+  "prompt": "Use case: logo-brand. Create a single polished app icon / logo for Jem Calc, a modern scientific and graphing calculator. Minimalist, dimensional, exclusively red tones for the symbol. A bold custom mathematical sigma (Σ) formed from ONE continuous thick sculptural ribbon with softly beveled edges: clean horizontal top and bottom bars and a precise diagonal zigzag waist. It must read unmistakably as a mathematical sigma at tiny app-icon sizes. Front-facing, mostly orthographic, with restrained visible depth on the lower-right edges; premium satin ceramic material, not glass, not chrome. Rich ruby-red front faces (#C42D43), deeper wine-red side faces (#8D1830), subtle coral-red highlights. Soft studio illumination from the upper left, a small delicate contact shadow underneath gives tangible volume. Center the symbol, occupying about 62% of a perfectly square image, with generous even safe margins for circular and rounded-square OS icon masks. Solid warm ivory background (#FFF7F5), full bleed to all four corners. Render as a finished high-resolution square raster icon, no border, no pre-rounded outer tile, no extra objects or scene. No words, no lettering except the single sigma symbol, no numerals, no watermark, no brand mockup, no gradients in the background. Elegant, precise, understated, attractive, distinctive.",
+  "packaging": "node scripts/sync_brand_icons.mjs (macOS sips; resizing only)",
+  "android_adaptive_icon": "jem_launcher.xml adds a 16.67% inset to preserve the complete sigma under circular launcher masks.",
+  "theme_source": "app/lib/core/palette.dart",
+  "palette": {
+    "ruby": "#B9263D",
+    "light_surface": "#FFFBFA",
+    "light_editor": "#FFF3F1",
+    "dark_surface": "#1A1114",
+    "dark_editor": "#23161A",
+    "dark_accent": "#FF8998"
+  }
+}

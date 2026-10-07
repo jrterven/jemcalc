@@ -1,0 +1,475 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "id": "decimal_exact",
+      "source": "0.1+0.2",
+      "ast": {
+        "type": "binary",
+        "op": "+",
+        "left": {
+          "type": "number",
+          "value": ".1"
+        },
+        "right": {
+          "type": "number",
+          "value": ".2"
+        }
+      },
+      "operation": "exact",
+      "angleMode": "rad",
+      "expected": {
+        "status": "exact",
+        "text": "3/10"
+      },
+      "local": {
+        "kind": "exact",
+        "text": "3/10"
+      }
+    },
+    {
+      "id": "rational_exact",
+      "source": "1/3+1/6",
+      "ast": {
+        "type": "binary",
+        "op": "+",
+        "left": {
+          "type": "binary",
+          "op": "/",
+          "left": {
+            "type": "number",
+            "value": "1"
+          },
+          "right": {
+            "type": "number",
+            "value": "3"
+          }
+        },
+        "right": {
+          "type": "binary",
+          "op": "/",
+          "left": {
+            "type": "number",
+            "value": "1"
+          },
+          "right": {
+            "type": "number",
+            "value": "6"
+          }
+        }
+      },
+      "operation": "exact",
+      "angleMode": "rad",
+      "expected": {
+        "status": "exact",
+        "text": "1/2"
+      },
+      "local": {
+        "kind": "exact",
+        "text": "1/2"
+      }
+    },
+    {
+      "id": "scientific_exact",
+      "source": "1.2e-3",
+      "ast": {
+        "type": "number",
+        "value": "1.2e-3"
+      },
+      "operation": "exact",
+      "angleMode": "rad",
+      "expected": {
+        "status": "exact",
+        "text": "3/2500"
+      },
+      "local": {
+        "kind": "exact",
+        "text": "3/2500"
+      }
+    },
+    {
+      "id": "odd_root",
+      "source": "\\sqrt[3]{-8}",
+      "ast": {
+        "type": "call",
+        "fn": "root",
+        "args": [
+          {
+            "type": "number",
+            "value": "-8"
+          },
+          {
+            "type": "number",
+            "value": "3"
+          }
+        ]
+      },
+      "operation": "exact",
+      "angleMode": "rad",
+      "expected": {
+        "status": "exact",
+        "text": "-2"
+      },
+      "local": {
+        "kind": "exact",
+        "text": "-2"
+      }
+    },
+    {
+      "id": "negative_integer_power",
+      "source": "(-2)^3",
+      "ast": {
+        "type": "binary",
+        "op": "^",
+        "left": {
+          "type": "number",
+          "value": "-2"
+        },
+        "right": {
+          "type": "number",
+          "value": "3"
+        }
+      },
+      "operation": "exact",
+      "angleMode": "rad",
+      "expected": {
+        "status": "exact",
+        "text": "-8"
+      },
+      "local": {
+        "kind": "exact",
+        "text": "-8"
+      }
+    },
+    {
+      "id": "factorial",
+      "source": "10!",
+      "ast": {
+        "type": "call",
+        "fn": "factorial",
+        "args": [
+          {
+            "type": "number",
+            "value": "10"
+          }
+        ]
+      },
+      "operation": "exact",
+      "angleMode": "rad",
+      "expected": {
+        "status": "exact",
+        "text": "3628800"
+      },
+      "local": {
+        "kind": "exact",
+        "text": "3628800"
+      }
+    },
+    {
+      "id": "degrees",
+      "source": "sin(30)",
+      "ast": {
+        "type": "call",
+        "fn": "sin",
+        "args": [
+          {
+            "type": "number",
+            "value": "30"
+          }
+        ]
+      },
+      "operation": "exact",
+      "angleMode": "deg",
+      "expected": {
+        "status": "exact",
+        "text": "1/2"
+      },
+      "local": {
+        "kind": "numeric",
+        "value": 0.5,
+        "tolerance": 1e-12
+      }
+    },
+    {
+      "id": "inverse_degrees",
+      "source": "asin(1)",
+      "ast": {
+        "type": "call",
+        "fn": "asin",
+        "args": [
+          {
+            "type": "number",
+            "value": "1"
+          }
+        ]
+      },
+      "operation": "exact",
+      "angleMode": "deg",
+      "expected": {
+        "status": "exact",
+        "text": "90"
+      },
+      "local": {
+        "kind": "numeric",
+        "value": 90,
+        "tolerance": 1e-12
+      }
+    },
+    {
+      "id": "sqrt_irrational",
+      "source": "\\sqrt{2}",
+      "ast": {
+        "type": "call",
+        "fn": "sqrt",
+        "args": [
+          {
+            "type": "number",
+            "value": "2"
+          }
+        ]
+      },
+      "operation": "exact",
+      "angleMode": "rad",
+      "expected": {
+        "status": "exact",
+        "text": "sqrt(2)"
+      },
+      "local": {
+        "kind": "numeric",
+        "value": 1.4142135623730951,
+        "tolerance": 1e-12
+      }
+    },
+    {
+      "id": "undefined_zero_power",
+      "source": "0^0",
+      "ast": {
+        "type": "binary",
+        "op": "^",
+        "left": {
+          "type": "number",
+          "value": "0"
+        },
+        "right": {
+          "type": "number",
+          "value": "0"
+        }
+      },
+      "operation": "exact",
+      "angleMode": "rad",
+      "expected": {
+        "status": "domainError"
+      },
+      "local": {
+        "kind": "error"
+      }
+    },
+    {
+      "id": "real_power_branch",
+      "source": "(-8)^(1/3)",
+      "ast": {
+        "type": "binary",
+        "op": "^",
+        "left": {
+          "type": "number",
+          "value": "-8"
+        },
+        "right": {
+          "type": "binary",
+          "op": "/",
+          "left": {
+            "type": "number",
+            "value": "1"
+          },
+          "right": {
+            "type": "number",
+            "value": "3"
+          }
+        }
+      },
+      "operation": "exact",
+      "angleMode": "rad",
+      "expected": {
+        "status": "domainError"
+      },
+      "local": {
+        "kind": "error"
+      }
+    },
+    {
+      "id": "tan_degree_pole",
+      "source": "tan(90)",
+      "ast": {
+        "type": "call",
+        "fn": "tan",
+        "args": [
+          {
+            "type": "number",
+            "value": "90"
+          }
+        ]
+      },
+      "operation": "exact",
+      "angleMode": "deg",
+      "expected": {
+        "status": "domainError"
+      },
+      "local": {
+        "kind": "error"
+      }
+    },
+    {
+      "id": "log_domain",
+      "source": "ln(0)",
+      "ast": {
+        "type": "call",
+        "fn": "ln",
+        "args": [
+          {
+            "type": "number",
+            "value": "0"
+          }
+        ]
+      },
+      "operation": "exact",
+      "angleMode": "rad",
+      "expected": {
+        "status": "domainError"
+      },
+      "local": {
+        "kind": "error"
+      }
+    },
+    {
+      "id": "power_budget",
+      "source": "(1e400)^16384",
+      "ast": {
+        "type": "binary",
+        "op": "^",
+        "left": {
+          "type": "number",
+          "value": "1e400"
+        },
+        "right": {
+          "type": "number",
+          "value": "16384"
+        }
+      },
+      "operation": "exact",
+      "angleMode": "rad",
+      "expected": {
+        "status": "unsupported"
+      },
+      "local": {
+        "kind": "error"
+      }
+    },
+    {
+      "id": "typed_derivative",
+      "source": "\\frac{d}{dx}x^2",
+      "ast": {
+        "type": "derivative",
+        "body": {
+          "type": "binary",
+          "op": "^",
+          "left": {
+            "type": "symbol",
+            "name": "x"
+          },
+          "right": {
+            "type": "number",
+            "value": "2"
+          }
+        },
+        "variable": "x",
+        "order": 1
+      },
+      "operation": "differentiate",
+      "angleMode": "rad",
+      "expected": {
+        "status": "exact",
+        "text": "2*x"
+      },
+      "local": {
+        "kind": "cas"
+      }
+    },
+    {
+      "id": "typed_integral",
+      "source": "\\int_{0}^{1}x^2 dx",
+      "ast": {
+        "type": "integral",
+        "body": {
+          "type": "binary",
+          "op": "^",
+          "left": {
+            "type": "symbol",
+            "name": "x"
+          },
+          "right": {
+            "type": "number",
+            "value": "2"
+          }
+        },
+        "variable": "x",
+        "lower": {
+          "type": "number",
+          "value": "0"
+        },
+        "upper": {
+          "type": "number",
+          "value": "1"
+        }
+      },
+      "operation": "integrate",
+      "angleMode": "rad",
+      "expected": {
+        "status": "exact",
+        "text": "1/3"
+      },
+      "local": {
+        "kind": "cas"
+      }
+    },
+    {
+      "id": "typed_limit",
+      "source": "\\lim_{x\\to 0}\\frac{\\sin(x)}{x}",
+      "ast": {
+        "type": "limit",
+        "body": {
+          "type": "binary",
+          "op": "/",
+          "left": {
+            "type": "call",
+            "fn": "sin",
+            "args": [
+              {
+                "type": "symbol",
+                "name": "x"
+              }
+            ]
+          },
+          "right": {
+            "type": "symbol",
+            "name": "x"
+          }
+        },
+        "variable": "x",
+        "to": {
+          "type": "number",
+          "value": "0"
+        },
+        "direction": "both"
+      },
+      "operation": "limit",
+      "angleMode": "rad",
+      "expected": {
+        "status": "exact",
+        "text": "1"
+      },
+      "local": {
+        "kind": "cas"
+      }
+    }
+  ]
+}

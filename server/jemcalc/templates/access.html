@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="theme-color" content="#B9263D">
+  <title>Acceso · Jem Calc</title>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <style>
+    :root {color-scheme:light dark; --bg:#FFFBFA; --surface:#FFF3F1; --text:#2D1B20; --muted:#79565F; --accent:#B9263D; --on-accent:white; --line:#EBD5D8}
+    * {box-sizing:border-box}
+    body {margin:0; min-height:100svh; display:grid; place-items:center; background:var(--bg); color:var(--text); font:16px/1.5 system-ui,sans-serif; padding:24px}
+    main {width:100%; max-width:380px; text-align:center}
+    img {width:116px; height:116px; border-radius:28px}
+    h1 {font-size:28px; letter-spacing:-.8px; margin:20px 0 4px}
+    p {color:var(--muted); margin:0 0 32px}
+    form {text-align:left}
+    label {display:block; margin-bottom:8px; font-weight:600; font-size:14px}
+    input {width:100%; font:inherit; border:1px solid var(--line); border-radius:16px; background:var(--surface); color:var(--text); padding:16px; outline-offset:4px; outline-color:var(--accent)}
+    button {width:100%; border:0; border-radius:16px; padding:16px; background:var(--accent); color:var(--on-accent); font:600 16px system-ui; margin-top:20px; cursor:pointer}
+    .error {font-size:14px; color:var(--accent); margin:12px 0 0; min-height:21px}
+    @media(prefers-color-scheme:dark) {:root {--bg:#1A1114; --surface:#23161A; --text:#FCE5E8; --muted:#D8B9C0; --accent:#FF8998; --on-accent:#510C1E; --line:#574048}}
+  </style>
+</head>
+<body><main>
+  <img src="/access/logo.png" alt="" width="116" height="116">
+  <h1>Jem Calc</h1><p>Tu espacio de cálculo.</p>
+  <form method="post" action="/access">
+    <label for="password">Clave de acceso</label>
+    <input id="password" name="password" type="password" autocomplete="current-password" required maxlength="256">
+    <div class="error" role="alert">{{message}}</div>
+    <button type="submit">Entrar</button>
+  </form>
+</main></body></html>

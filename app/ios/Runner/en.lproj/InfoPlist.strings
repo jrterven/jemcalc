@@ -1,0 +1,4 @@
+"NSCameraUsageDescription" = "Photograph an equation to recognize and edit it.";
+"NSMicrophoneUsageDescription" = "Dictate equations while they appear on screen.";
+"NSPhotoLibraryUsageDescription" = "Select an equation image.";
+"NSLocalNetworkUsageDescription" = "Connect to your private calculation server on this network.";

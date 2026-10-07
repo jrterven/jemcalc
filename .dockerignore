@@ -1,0 +1,16 @@
+**
+!server/
+!server/jemcalc/
+!server/jemcalc/**
+!server/requirements.txt
+!server/requirements-lock.txt
+!server/pyproject.toml
+!app/
+!app/build/
+!app/build/web/
+!app/build/web/**
+!deploy/
+!deploy/Dockerfile
+**/__pycache__/**
+**/*.pyc
+**/.env*

@@ -1,0 +1,88 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><meta http-equiv="Content-Security-Policy" content="default-src 'self' file: data:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' file: data:; connect-src 'none'">
+<link rel="stylesheet" href="../mathlive/mathlive-fonts.css"><script src="../mathlive/mathlive.min.js"></script><script>MathfieldElement.fontsDirectory="../mathlive/fonts";MathfieldElement.soundsDirectory=null;</script>
+<style>
+:root { color-scheme:light; --bg:#fff3f1;--fg:#2d1b20;--accent:#b9263d;--on-accent:#ffffff;--key:#ffffff;--line:#edd7d8; }
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--fg);font-family:-apple-system,system-ui,sans-serif}
+body{display:flex;flex-direction:column;overflow-y:auto}#field-wrap{padding:8px 6px;min-height:96px;display:flex;align-items:center;flex:1;overflow:auto}math-field{width:100%;min-width:0;border:0;outline:none;background:transparent;color:var(--fg);font-size:30px;padding:6px;--caret-color:var(--accent);--selection-background-color:#c42d4340;--placeholder-color:var(--accent);--contains-highlight-background-color:#c42d4320;--smart-fence-color:var(--accent)}math-field::part(virtual-keyboard-toggle),math-field::part(menu-toggle){display:none}
+#keyboard{width:100%;height:280px;flex-shrink:0;position:relative;--keyboard-background:var(--bg);--keyboard-toolbar-background:var(--bg);--keycap-background:var(--key);--keycap-text:var(--fg);--keycap-secondary-background:var(--key);--keycap-secondary-text:var(--fg);--keycap-primary-background:var(--accent);--keycap-primary-text:var(--on-accent);--keycap-height:46px;--keycap-width:calc((100cqw - 24px)/4);--keyboard-toolbar-font-size:14px;--keyboard-toolbar-text-active:var(--accent);--keycap-gap:4px;--keycap-font-size:22px;--keyboard-padding-bottom:4px;--keyboard-padding-top:4px;--keycap-border:1px solid var(--line);--keycap-border-radius:12px;--keycap-shadow:none;--keyboard-toolbar-text:var(--fg)}
+#keyboard .MLK__toolbar>.left{column-gap:8px}
+#keyboard.hidden{display:none}body.compact #field-wrap{min-height:60px;padding:4px 8px}body.compact math-field{font-size:27px}
+@media(max-height:420px){#field-wrap{min-height:64px;padding:0 6px}}
+</style></head><body><div id="field-wrap"><math-field id="mf" aria-label="Equation" inputmode="none" math-virtual-keyboard-policy="manual"></math-field></div><div id="keyboard"></div>
+<script>
+MathfieldElement.fontsDirectory='../mathlive/fonts';MathfieldElement.soundsDirectory=null;
+const mf=document.getElementById('mf');const keyboard=document.getElementById('keyboard');let suppress=false;let ready=false;let lastLanguage=null;let keyboardWanted=false;
+function send(data){if(window.JemBridge)JemBridge.postMessage(JSON.stringify(data));else if(parent!==window)parent.postMessage(JSON.stringify({channel:'jem-editor',...data}),location.origin);}
+// Keep the web iframe's keyboard inside its own editor instead of proxying it to Flutter's document.
+mf.mathVirtualKeyboardPolicy=parent===window?'manual':'sandboxed';
+window.mathVirtualKeyboard.container=keyboard;window.mathVirtualKeyboard.editToolbar='none';window.mathVirtualKeyboard.targetOrigin='*';
+window.mathVirtualKeyboard.addEventListener('geometrychange',()=>{const h=window.mathVirtualKeyboard.boundingRect.height;if(h>0)keyboard.style.height=h+'px';});
+function key(label, latex=label){return {label,latex};}
+function layouts(es){return [
+ {label:es?'Básico':'Basic',tooltip:'123',rows:[
+ [{label:'C',command:'deleteAll'},key('('),key(')'),{label:'⌫',command:'deleteBackward'}],
+ [key('7'),key('8'),key('9'),key('÷','\\div')],
+ [key('4'),key('5'),key('6'),key('×','\\times')],
+ [key('1'),key('2'),key('3'),key('−','-')],
+ [key('0'),key('.'),key('='),key('+')]]},
+ {label:es?'Científico':'Scientific',rows:[
+ ['\\sin','\\cos','\\tan',{label:'⌫',command:'deleteBackward'}],
+ [{latex:'\\arcsin',label:'sin⁻¹',class:'small'},
+  {latex:'\\arccos',label:'cos⁻¹',class:'small'},
+  {latex:'\\arctan',label:'tan⁻¹',class:'small'},
+  {latex:'^{#?}',label:'xⁿ'}],
+ ['\\ln','\\log',{latex:'\\exp\\left(#0\\right)',label:'exp'},
+  {latex:'\\frac{#0}{#?}',label:'a/b'}],
+ ['\\pi','e',{latex:'\\sqrt{#0}',label:'√'},
+  {latex:'\\sqrt[#?]{#0}',label:'ⁿ√'}],
+ ['x',{latex:'\\left|#0\\right|',label:'|x|'},'!',
+  {label:'↵',class:'action',command:['performWithFeedback','commit']}]]},
+ {label:es?'Cálculo':'Calculus',rows:[
+ [{latex:'\\frac{d}{dx}\\left(#0\\right)',label:'d/dx'},
+  {latex:'\\int #0 \\,\\mathrm{d}x',label:'∫'},
+  {latex:'\\int_{#?}^{#?} #0 \\,\\mathrm{d}x',label:'∫ₐᵦ'},
+  {latex:'\\lim_{x\\to #?} #0',label:'lim'}],
+ ['x','y','z','\\infty'],
+ ['(',')','=',{latex:';',label:es?'fila':'row'}],
+ [{label:'↶',command:'undo'},{label:'↷',command:'redo'},
+  {label:'←',command:'moveToPreviousChar'},{label:'→',command:'moveToNextChar'}]]}
+];}
+// Reconcile against MathLive's actual state after the native view has resized.
+// A requested keyboard can become hidden when its WebView loses focus.
+function syncKeyboard(){
+ if(keyboardWanted){
+  if(!window.mathVirtualKeyboard.visible){mf.focus();window.mathVirtualKeyboard.show({animate:false});}
+ }else if(window.mathVirtualKeyboard.visible){window.mathVirtualKeyboard.hide({animate:false});}
+}
+let syncFrame;
+function scheduleKeyboardSync(){cancelAnimationFrame(syncFrame);syncFrame=requestAnimationFrame(syncKeyboard);}
+new ResizeObserver(scheduleKeyboardSync).observe(document.documentElement);
+mf.addEventListener('focus',scheduleKeyboardSync);
+mf.menuItems=[];mf.smartFence=true;mf.inlineShortcuts={...mf.inlineShortcuts,sen:'\\sin',tg:'\\tan'};
+window.configure=function(c){
+ const st=document.documentElement.style;const dark=c.dark;
+ const p=c.palette||{bg:dark?'#23161a':'#fff3f1',fg:dark?'#f8e9ec':'#2d1b20',key:dark?'#362329':'#ffffff',line:dark?'#52343d':'#edd7d8',accent:dark?'#ff8998':'#b9263d',onAccent:dark?'#510c1e':'#ffffff'};
+ for(const name of ['bg','fg','key','line','accent']){if(/^#[0-9a-f]{6}$/i.test(p[name]||''))st.setProperty('--'+name,p[name]);}
+ if(/^#[0-9a-f]{6}$/i.test(p.onAccent||''))st.setProperty('--on-accent',p.onAccent);
+ st.colorScheme=dark?'dark':'light';
+ if(lastLanguage!==c.language){MathfieldElement.locale=c.language||'es';mf.setAttribute('aria-label',c.language==='es'?'Ecuación':'Equation');window.mathVirtualKeyboard.layouts=layouts(c.language==='es');lastLanguage=c.language;}
+ keyboardWanted=Boolean(c.keyboard);
+ keyboard.classList.toggle('hidden',!keyboardWanted);document.body.classList.toggle('compact',!keyboardWanted);
+ if(!keyboardWanted)window.mathVirtualKeyboard.hide({animate:false});
+ scheduleKeyboardSync();
+ if(c.latex!==undefined && c.latex!==mf.value){suppress=true;mf.setValue(c.latex,{silenceNotifications:true});suppress=false;}
+};
+window.setDraft=function(latex){suppress=true;mf.setValue(latex,{silenceNotifications:true});mf.position=-1;suppress=false;};
+window.insertLatex=function(latex){mf.focus();mf.insert(latex);};
+mf.addEventListener('input',()=>{if(!suppress)send({type:'input',latex:mf.value});});
+mf.addEventListener('beforeinput',ev=>{if(ev.inputType==='insertLineBreak'||ev.data==='insertLineBreak'){ev.preventDefault();send({type:'submit'});}});
+mf.addEventListener('change',()=>{});
+
+mf.addEventListener('selection-change',()=>send({type:'selection',selection:mf.selection}));
+window.addEventListener('message',event=>{
+ if(event.origin!==location.origin || event.source!==parent || typeof event.data!=='string')return;
+ let data;try{data=JSON.parse(event.data);}catch(_){return;}
+ if(data.channel==='jem-editor' && data.type==='configure' && data.configuration)window.configure(data.configuration);
+});
+customElements.whenDefined('math-field').then(()=>{ready=true;send({type:'ready'});});
+</script></body></html>
