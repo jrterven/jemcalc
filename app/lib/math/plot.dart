@@ -1,4 +1,5 @@
 import 'ast.dart';
+import 'display_latex.dart';
 import 'evaluator.dart';
 import 'latex.dart';
 import 'parser.dart';
@@ -6,6 +7,27 @@ import 'parser.dart';
 class PlotException implements Exception {
   const PlotException(this.reason);
   final String reason;
+}
+
+/// Format the original equation, including canonical labels saved by older
+/// versions. Display formatting never changes curve data, identity or history.
+String plotLabelLatex(Map<String, dynamic> curve) {
+  final label = curve['label'];
+  if (label is String && label.isNotEmpty) {
+    try {
+      return astToDisplayLatex(parseLatex(label));
+    } on MathParseException {
+      return label;
+    } on MathEvaluationException {
+      return label;
+    }
+  }
+  final axis = curve['kind'] == 'vertical' ? 'x' : 'y';
+  try {
+    return '$axis = ${astToDisplayLatex(curve['ast'] as MathNode)}';
+  } on MathEvaluationException {
+    return '$axis = ${curve['latex']}';
+  }
 }
 
 /// Prepare all rows before changing the graph. Algebra is local and preserves

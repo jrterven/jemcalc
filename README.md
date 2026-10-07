@@ -82,6 +82,8 @@ Al terminar, revisa la expresión y pulsa **Resolver**. En Configuración puedes
 
 Escribe una función como `x^2`, `sin(x)` o `y=x+1`, una ecuación lineal como `3x+y=5`, o un sistema como `3x+y=5;2x-y=3`, y pulsa **Graficar**. El sistema añade cada recta con su propia casilla de visibilidad; también se admiten rectas verticales como `x=2`. No hace falta resolver ni despejar antes: la conversión es local y determinista. Puedes añadir hasta cuatro curvas, desplazar la vista, hacer zoom y arrastrar los cursores **A/B** para consultar coordenadas y diferencias sobre la primera curva visible. Una recta vertical no tiene una altura única para un valor de x; sus lecturas de y aparecen como `—`. Las relaciones implícitas no lineales, como `x^2+y^2=1`, todavía requieren otra representación; las funciones explícitas conservan su dominio y sus discontinuidades.
 
+Las ecuaciones de la leyenda usan notación matemática legible (`3x + y = 5`), con fracciones y potencias y conservando los paréntesis necesarios. Este formato también se aplica a las curvas guardadas, sin modificar sus datos.
+
 La casilla de cada curva permite ocultarla y volver a mostrarla. El pequeño bote de basura la elimina de la gráfica. Usa **+** para volver al editor y añadir otra función. Las coordenadas y valores de la gráfica son aproximados.
 
 ![Cuatro curvas con rojo, azul, verde y ámbar, casillas de visibilidad y cursores A y B](docs/screenshots/graficas.png)
@@ -172,7 +174,7 @@ El backend de desarrollo requiere que la Mac siga encendida y sea accesible para
 
 ### Instalar el APK Android sin herramientas de desarrollo
 
-Desde el teléfono, abre [Instalar Jem Calc para Android](https://calc.jemailabs.com/android). Introduce la clave del piloto si se solicita; al iniciar sesión volverás a la página de instalación. Pulsa **Descargar APK** (versión 1.0.4, compilación 6), abre el archivo y, si Android lo solicita, permite a ese navegador instalar aplicaciones de esa fuente. No requiere depuración USB. Si lo abriste dentro de otra app y no comienza la descarga, abre la página en Chrome.
+Desde el teléfono, abre [Instalar Jem Calc para Android](https://calc.jemailabs.com/android). Introduce la clave del piloto si se solicita; al iniciar sesión volverás a la página de instalación. Pulsa **Descargar APK** (versión 1.0.5, compilación 7), abre el archivo y, si Android lo solicita, permite a ese navegador instalar aplicaciones de esa fuente. No requiere depuración USB. Si lo abriste dentro de otra app y no comienza la descarga, abre la página en Chrome.
 
 La app ya apunta al servidor alojado. Introduce el token del piloto facilitado por el administrador en **Configuración → Token del piloto**, guarda los cambios y prueba `x+1=2`. El token nativo es diferente de la clave de acceso de la web y no está dentro del instalador.
 
@@ -188,7 +190,7 @@ keyPassword=TU_CONTRASENA_PRIVADA
 Desde `app/`, con los certificados opcionales `assets/pilot/server.pem` y `server.der` guardados temporalmente fuera de los assets para una distribución de producción:
 
 ```sh
-flutter build apk --release --build-name=1.0.4 --build-number=6 \
+flutter build apk --release --build-name=1.0.5 --build-number=7 \
   --dart-define=PILOT_URL=https://calc.jemailabs.com/api
 ```
 

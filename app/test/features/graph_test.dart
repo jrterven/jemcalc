@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jem_calc/features/graph.dart';
 import 'package:jem_calc/core/strings.dart';
@@ -24,6 +25,34 @@ Map<String, dynamic> request(
 };
 
 void main() {
+  testWidgets('stored equations render as natural mathematical notation', (
+    tester,
+  ) async {
+    final curves = preparePlots(parseLatex('3x+y=5;2x-y=3;y=(x+1)^2'));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: GraphScreen(curves: curves, strings: const Strings('es')),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final formulas = tester.widgetList<Math>(find.byType(Math)).toList();
+    final expected = [
+      '3x + y = 5',
+      '2x - y = 3',
+      r'y = \left(x + 1\right)^{2}',
+    ];
+    expect(formulas, hasLength(expected.length));
+    for (var i = 0; i < expected.length; i++) {
+      expect(formulas[i].parseError, isNull);
+      expect(
+        formulas[i].ast!.greenRoot.toJson(),
+        Math.tex(expected[i]).ast!.greenRoot.toJson(),
+      );
+    }
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+  });
+
   test('hidden curves keep their list positions and return when enabled', () {
     final curves = [
       {'ast': parseExpression('x'), 'angleMode': 'rad', 'visible': false},

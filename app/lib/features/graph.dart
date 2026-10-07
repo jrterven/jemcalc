@@ -7,6 +7,7 @@ import 'package:flutter_math_fork/flutter_math.dart';
 import '../core/strings.dart';
 import '../core/palette.dart';
 import '../math/evaluator.dart';
+import '../math/plot.dart';
 
 typedef CurveSegments = List<List<List<double>>>;
 typedef CurveBatch = Map<int, CurveSegments>;
@@ -367,16 +368,15 @@ class _GraphScreenState extends State<GraphScreen> {
                             child: SingleChildScrollView(
                               scrollDirection: Axis.horizontal,
                               child: Math.tex(
-                                entry.value['label'] as String? ??
-                                    '${entry.value['kind'] == 'vertical' ? 'x' : 'y'}=${entry.value['latex']}',
+                                plotLabelLatex(entry.value),
                                 textStyle: TextStyle(
-                                  fontSize: 17,
+                                  fontSize: 21,
                                   color: entry.value['visible'] != false
                                       ? colors.onSurface
                                       : colors.onSurfaceVariant,
                                 ),
                                 onErrorFallback: (e) =>
-                                    Text(entry.value['latex'] as String),
+                                    Text(plotLabelLatex(entry.value)),
                               ),
                             ),
                           ),
