@@ -26,6 +26,12 @@ from .config import get_settings
 COOKIE = "__Host-jemcalc"
 SESSION_SECONDS = 7 * 24 * 3600
 HERE = Path(__file__).parent
+ANDROID_APK = "jemcalc-1.0.0-2.apk"
+
+
+def login_destination(value: str | None):
+    # Only known pages can be resumed after login; never redirect to user URLs.
+    return "/android" if value == "/android" else "/"
 
 
 @dataclass(frozen=True)
@@ -146,7 +152,8 @@ class AccessBoundary:
         elif path not in {"/access", "/access/logout", "/access/logo.png", "/favicon.png", "/robots.txt"} and not cookie_ok:
             # Desktop link openers may resolve a relative Location as a local file.
             # Always redirect to the configured HTTPS origin, never a request header.
-            return await RedirectResponse(self.settings.origin + "/access", status_code=303)(scope, receive, secure_send)
+            resume = "?next=/android" if path == "/android" or path.startswith("/downloads/") else ""
+            return await RedirectResponse(self.settings.origin + "/access" + resume, status_code=303)(scope, receive, secure_send)
         return await self.app(scope, receive, secure_send)
 
 
@@ -178,9 +185,12 @@ def create_app(settings: WebSettings | None = None):
 
     @app.get("/access", response_class=HTMLResponse)
     async def login_page(request: Request):
+        destination = login_destination(request.query_params.get("next"))
+        if destination == "/android" and valid_session(request.cookies.get(COOKIE, ""), settings):
+            return RedirectResponse(settings.origin + destination, status_code=303)
         return HTMLResponse((HERE / "templates/access.html").read_text().replace(
             "{{message}}", "Clave incorrecta. Intenta otra vez." if request.query_params.get("error") else ""
-        ))
+        ).replace("{{next}}", destination))
 
     @app.post("/access")
     async def login(request: Request):
@@ -193,12 +203,15 @@ def create_app(settings: WebSettings | None = None):
                 return JSONResponse({"detail": "Request too large"}, status_code=413)
         from urllib.parse import parse_qs
         try:
-            password = parse_qs(body.decode(), max_num_fields=4).get("password", [""])[0]
+            form = parse_qs(body.decode(), max_num_fields=4)
         except (UnicodeDecodeError, ValueError):
-            password = ""
+            form = {}
+        password = form.get("password", [""])[0]
+        destination = login_destination(form.get("next", [""])[0])
         if not secrets.compare_digest(password.encode(), settings.password.encode()):
-            return RedirectResponse(settings.origin + "/access?error=1", status_code=303)
-        response = RedirectResponse(settings.origin + "/", status_code=303)
+            resume = "&next=/android" if destination == "/android" else ""
+            return RedirectResponse(settings.origin + "/access?error=1" + resume, status_code=303)
+        response = RedirectResponse(settings.origin + destination, status_code=303)
         response.set_cookie(COOKIE, issue_session(settings), max_age=SESSION_SECONDS,
                             secure=True, httponly=True, samesite="strict", path="/")
         return response
@@ -223,6 +236,17 @@ def create_app(settings: WebSettings | None = None):
     async def robots():
         from starlette.responses import PlainTextResponse
         return PlainTextResponse("User-agent: *\nDisallow: /\n")
+
+    @app.get("/android", response_class=HTMLResponse)
+    async def android_page():
+        return HTMLResponse((HERE / "templates/android.html").read_text().replace("{{apk}}", ANDROID_APK))
+
+    @app.api_route("/downloads/" + ANDROID_APK, methods=["GET", "HEAD"])
+    async def android_installer():
+        apk = settings.static_dir / "downloads" / ANDROID_APK
+        if not apk.is_file():
+            return JSONResponse({"detail": "El instalador no está disponible."}, status_code=404)
+        return FileResponse(apk, filename=ANDROID_APK, media_type="application/vnd.android.package-archive")
 
     app.mount("/api", ApiMount())
     app.mount("/", StaticFiles(directory=settings.static_dir, html=True))

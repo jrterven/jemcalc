@@ -27,6 +27,7 @@
   <img src="/access/logo.png" alt="" width="116" height="116">
   <h1>Jem Calc</h1><p>Tu espacio de cálculo.</p>
   <form method="post" action="/access">
+    <input type="hidden" name="next" value="{{next}}">
     <label for="password">Clave de acceso</label>
     <input id="password" name="password" type="password" autocomplete="current-password" required maxlength="256">
     <div class="error" role="alert">{{message}}</div>

@@ -58,6 +58,56 @@ def test_redirect_uses_configured_https_origin_not_forwarded_headers(setup):
     assert result.headers["location"] == ORIGIN + "/access"
 
 
+def test_android_login_resumes_download_page_and_serves_attachment(setup):
+    client, settings = setup
+    folder = settings.static_dir / "downloads"
+    folder.mkdir()
+    content = b"PK\x03\x04android-test-artifact"
+    (folder / production.ANDROID_APK).write_bytes(content)
+    path = "/downloads/" + production.ANDROID_APK
+    for target in ["/android", path]:
+        response = client.get(target)
+        assert response.status_code == 303
+        assert response.headers["location"] == ORIGIN + "/access?next=/android"
+    page = client.get("/access?next=/android")
+    assert 'name="next" value="/android"' in page.text
+    wrong = client.post("/access", data={"password": "wrong", "next": "/android"}, headers={"Origin": ORIGIN})
+    assert wrong.headers["location"] == ORIGIN + "/access?error=1&next=/android"
+    response = client.post("/access", data={"password": PASSWORD, "next": "/android"}, headers={"Origin": ORIGIN})
+    assert response.headers["location"] == ORIGIN + "/android"
+    page = client.get("/android")
+    assert page.status_code == 200 and "Descargar APK" in page.text
+    assert TOKEN not in page.text and PASSWORD not in page.text
+    assert client.get("/access?next=/android").headers["location"] == ORIGIN + "/android"
+    download = client.get(path)
+    assert download.content == content
+    assert download.headers["content-type"] == "application/vnd.android.package-archive"
+    assert download.headers["content-disposition"] == f'attachment; filename="{production.ANDROID_APK}"'
+    assert "no-store" in download.headers["cache-control"]
+    assert client.head(path).headers["content-length"] == str(len(content))
+    resumed = client.get(path, headers={"Range": "bytes=4-9"})
+    assert resumed.status_code == 206 and resumed.content == content[4:10]
+    client.cookies.clear()
+    assert client.head(path).status_code == 303
+
+
+@pytest.mark.parametrize("destination", ["https://foreign.example/", "//foreign.example/", "/\\foreign.example/", '/android\" onfocus="alert(1)', "/api/health", "/downloads/../.env"])
+def test_login_destination_is_allowlisted(setup, destination):
+    client, _ = setup
+    page = client.get("/access", params={"next": destination})
+    assert 'name="next" value="/"' in page.text
+    assert destination not in page.text
+    response = client.post("/access", data={"password": PASSWORD, "next": destination}, headers={"Origin": ORIGIN})
+    assert response.headers["location"] == ORIGIN + "/"
+
+
+def test_missing_android_artifact_returns_not_found_after_login(setup):
+    client, _ = setup
+    login(client)
+    response = client.get("/downloads/" + production.ANDROID_APK)
+    assert response.status_code == 404
+
+
 def test_api_cookie_and_native_bearer_auth(setup):
     client, _ = setup
     assert client.post("/api/v1/calculate", json=PAYLOAD).status_code == 401

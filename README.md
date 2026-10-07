@@ -151,7 +151,7 @@ El backend de desarrollo requiere que la Mac siga encendida y sea accesible para
 
 ### Instalar el APK Android sin herramientas de desarrollo
 
-Para el piloto privado, inicia sesión en [calc.jemailabs.com](https://calc.jemailabs.com) desde el teléfono y abre el [instalador Android 1.0.0, compilación 2](https://calc.jemailabs.com/downloads/jemcalc-1.0.0-2.apk). Descárgalo, ábrelo y, si Android lo solicita, permite a ese navegador instalar aplicaciones de esa fuente. No requiere depuración USB.
+Desde el teléfono, abre [Instalar Jem Calc para Android](https://calc.jemailabs.com/android). Introduce la clave del piloto si se solicita; al iniciar sesión volverás a la página de instalación. Pulsa **Descargar APK** (versión 1.0.0, compilación 2), abre el archivo y, si Android lo solicita, permite a ese navegador instalar aplicaciones de esa fuente. No requiere depuración USB. Si lo abriste dentro de otra app y no comienza la descarga, abre la página en Chrome.
 
 La app ya apunta al servidor alojado. Introduce el token del piloto facilitado por el administrador en **Configuración → Token del piloto**, guarda los cambios y prueba `x+1=2`. El token nativo es diferente de la clave de acceso de la web y no está dentro del instalador.
 
