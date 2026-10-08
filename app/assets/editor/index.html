@@ -1,5 +1,5 @@
 <!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><meta http-equiv="Content-Security-Policy" content="default-src 'self' file: data:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' file: data:; connect-src 'none'">
-<link rel="stylesheet" href="../mathlive/mathlive-fonts.css"><script src="../mathlive/mathlive.min.js"></script><script>MathfieldElement.fontsDirectory="../mathlive/fonts";MathfieldElement.soundsDirectory=null;</script>
+<link rel="stylesheet" href="../mathlive/mathlive-fonts.css"><link rel="stylesheet" href="../mathlive/mathlive-static.css"><script src="../mathlive/mathlive.min.js"></script><script>MathfieldElement.fontsDirectory="../mathlive/fonts";MathfieldElement.soundsDirectory=null;</script>
 <style>
 :root { color-scheme:light; --bg:#fff3f1;--fg:#2d1b20;--accent:#b9263d;--on-accent:#ffffff;--key:#ffffff;--key-hover:#fff0f2;--key-pressed:#ffdce2;--line:#edd7d8; }
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--fg);font-family:-apple-system,system-ui,sans-serif}
@@ -12,7 +12,19 @@ body{display:flex;flex-direction:column;overflow-y:auto}#field-wrap{padding:8px 
 @media(max-height:420px){#field-wrap{min-height:64px;padding:0 6px}}
 /* Only the equation viewport yields space to a hint. The keyboard stays pinned
    to the editor's bottom, including while the suggestion appears/disappears. */
-body:not(.compact) #field-wrap{min-height:0}
+#display{flex:1;min-height:0;display:flex;flex-direction:column;overflow:auto}
+#result{flex-shrink:0;margin:4px 4px 6px;padding:8px 6px 8px 14px;border-radius:16px;background:var(--result,#ffe8e9);display:flex;align-items:center;gap:4px}
+#result[hidden],#result [hidden]{display:none}
+#result-content{flex:1;min-width:0}
+#result-heading{display:flex;align-items:center;gap:6px;color:var(--accent);font-size:10px;font-weight:700;letter-spacing:.5px;margin-bottom:4px}
+#result-expression{overflow:auto;max-height:60px}
+#result-math{font-size:24px;padding:0;display:inline-block;width:max-content;white-space:nowrap}
+#result-plain{font-size:14px;white-space:pre-wrap;overflow-wrap:anywhere}
+#result-approximation{font-size:12px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;margin-top:3px}
+#result button{flex-shrink:0;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border:0;border-radius:50%;color:var(--fg);background:transparent;cursor:pointer}
+#result button:hover{background:var(--key-hover)}#result button:active{background:var(--key-pressed)}
+#result button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+#result svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.7}
 #completion{flex-shrink:0;display:flex;align-items:center;gap:8px;padding:2px 8px 4px;max-width:100%}
 #completion[hidden]{display:none}
 #completion-message{flex:1;min-width:0;font-size:12px;line-height:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -22,7 +34,7 @@ body:not(.compact) #field-wrap{min-height:0}
 #completion-actions button:hover{background:var(--key-hover)}
 #completion-actions button:active{background:var(--key-pressed)}
 #completion-actions button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
-</style></head><body><div id="field-wrap"><math-field id="mf" aria-label="Equation" inputmode="none" math-virtual-keyboard-policy="manual"></math-field></div><div id="completion" hidden><span id="completion-message"></span><div id="completion-actions"></div></div><div id="keyboard"></div>
+</style></head><body><div id="display"><div id="field-wrap"><math-field id="mf" aria-label="Equation" inputmode="none" math-virtual-keyboard-policy="manual"></math-field></div><div id="result" role="region" hidden><div id="result-content" aria-live="polite"><div id="result-heading"><span id="result-status"></span><span id="result-verified" hidden>✓</span></div><div id="result-expression"><div id="result-math" role="math"></div><div id="result-plain" hidden></div></div><div id="result-approximation" hidden></div></div><button id="result-details" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 10v7m0-11v2"/></svg></button><button id="result-copy" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="3" width="12" height="15" rx="2"/><path d="M5 7H4v14h12v-1"/></svg></button></div></div><div id="completion" hidden><span id="completion-message"></span><div id="completion-actions"></div></div><div id="keyboard"></div>
 <script>
 MathfieldElement.fontsDirectory='../mathlive/fonts';MathfieldElement.soundsDirectory=null;
 const mf=document.getElementById('mf');const keyboard=document.getElementById('keyboard');let suppress=false;let ready=false;let lastLanguage=null;let keyboardWanted=false;let lastFocusRequest=0;
@@ -48,6 +60,38 @@ function configureCompletion(proposal){
   });
   actions.append(button);
  }
+}
+let lastResult,displayedResult=null;
+function configureResult(value){
+ const signature=JSON.stringify(value);
+ if(signature===lastResult)return;
+ lastResult=signature;displayedResult=value;
+ const panel=document.getElementById('result'),display=document.getElementById('display');
+ panel.hidden=!value;
+ if(!value){display.scrollTop=0;return;}
+ panel.setAttribute('aria-label',value.resultLabel);
+ document.getElementById('result-status').textContent=value.status;
+ document.getElementById('result-verified').hidden=!value.verified;
+ const formula=document.getElementById('result-math'),plain=document.getElementById('result-plain');
+ formula.dataset.latex=value.latex;formula.setAttribute('aria-label',value.text||value.latex);
+ formula.hidden=!value.latex;plain.hidden=Boolean(value.latex);plain.textContent=value.text;
+ if(value.latex){
+  try{formula.innerHTML=MathLive.convertLatexToMarkup(value.latex);}
+  catch(_){formula.hidden=true;plain.hidden=false;}
+ }
+ const approximation=document.getElementById('result-approximation');
+ approximation.hidden=!value.approximation;approximation.textContent=value.approximation?'≈ '+value.approximation:'';
+ document.getElementById('result-details').hidden=!value.hasDetails;
+ for(const [id,label] of [['result-copy',value.copyLabel],['result-details',value.detailsLabel]]){
+  const button=document.getElementById(id);button.title=label;button.setAttribute('aria-label',label);
+ }
+ // Scroll only the display on short screens, never the document or keyboard.
+ requestAnimationFrame(()=>{if(displayedResult===value)display.scrollTop=display.scrollHeight;});
+}
+for(const [id,type] of [['result-copy','copyResult'],['result-details','resultDetails']]){
+ document.getElementById(id).addEventListener('click',()=>{
+  if(displayedResult)send({type,resultId:displayedResult.id});
+ });
 }
 // Keep the web iframe's keyboard inside its own editor instead of proxying it to Flutter's document.
 mf.mathVirtualKeyboardPolicy=parent===window?'manual':'sandboxed';
@@ -129,6 +173,7 @@ window.configure=function(c){
  if(/^#[0-9a-f]{6}$/i.test(p.onAccent||''))st.setProperty('--on-accent',p.onAccent);
  st.setProperty('--key-hover',p.keyHover||(dark?'#303030':'#fff0f2'));
  st.setProperty('--key-pressed',p.keyPressed||(dark?'#484848':'#ffdce2'));
+ st.setProperty('--result',/^#[0-9a-f]{6}$/i.test(p.result||'')?p.result:(dark?'#360f19':'#ffe8e9'));
  st.colorScheme=dark?'dark':'light';
  if(lastLanguage!==c.language){MathfieldElement.locale=c.language||'es';mf.setAttribute('aria-label',c.language==='es'?'Ecuación':'Equation');window.mathVirtualKeyboard.layouts=layouts(c.language==='es');lastLanguage=c.language;}
  keyboardWanted=Boolean(c.keyboard);
@@ -137,6 +182,7 @@ window.configure=function(c){
  scheduleKeyboardSync();
  if(c.latex!==undefined && c.latex!==mf.value){suppress=true;mf.setValue(c.latex,{silenceNotifications:true});suppress=false;}
  configureCompletion(c.completion??null);
+ configureResult(c.result??null);
  // Only a confirmed completion requests focus. Repeated model updates preserve the caret.
  if(keyboardWanted && c.focusRequest>0 && c.focusRequest!==lastFocusRequest){
   lastFocusRequest=c.focusRequest;mf.focus();mf.position=0;mf.executeCommand('moveToNextPlaceholder');

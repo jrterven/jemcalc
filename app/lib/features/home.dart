@@ -11,6 +11,7 @@ import 'settings.dart';
 import 'voice_panel.dart';
 import 'completion_hint.dart';
 import 'equation_editor_sheet.dart';
+import 'editor_result.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -195,6 +196,26 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                                                   ? completionSuggestions
                                                   : const [],
                                               onCompletion: m.applyCompletion,
+                                              result:
+                                                  m.mode ==
+                                                          InputMode.keyboard &&
+                                                      !m.maximized
+                                                  ? m.result
+                                                  : null,
+                                              onCopyResult: () {
+                                                if (m.result != null) {
+                                                  copyResult(m.result!);
+                                                }
+                                              },
+                                              onResultDetails: () {
+                                                if (m.result != null) {
+                                                  showResultDetails(
+                                                    context,
+                                                    m.result!,
+                                                    s,
+                                                  );
+                                                }
+                                              },
                                               latex: m.latex,
                                               language: m.language,
                                               showKeyboard:
@@ -206,7 +227,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                                             ),
                                           ),
                                         ),
-                                        if (m.result != null && !m.maximized)
+                                        if (m.mode != InputMode.keyboard &&
+                                            m.result != null &&
+                                            !m.maximized)
                                           ResultCard(model: m),
                                         if (m.mode != InputMode.keyboard &&
                                             completionSuggestions.isNotEmpty)
@@ -509,6 +532,7 @@ class _Actions extends StatelessWidget {
         FilledButton(
           onPressed: m.busy || m.latex.isEmpty ? null : m.calculate,
           style: FilledButton.styleFrom(
+            fixedSize: const Size.fromHeight(48),
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 13),
           ),
           child: m.busy
@@ -535,10 +559,7 @@ class ResultCard extends StatelessWidget {
     final latex = result['latex'] as String? ?? '';
     final plain = result['text'] as String? ?? '';
     final approximation = result['approximation'] as String?;
-    final details = [
-      ...(result['conditions'] as List? ?? []).map((c) => c.toString()),
-      if (verification?['detail'] != null) verification!['detail'].toString(),
-    ].join('\n');
+    final details = resultDetails(result);
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.fromLTRB(4, 4, 4, 6),
@@ -621,39 +642,12 @@ class ResultCard extends StatelessWidget {
           if (details.isNotEmpty)
             IconButton(
               tooltip: s.t('Dominio y comprobación', 'Domain and verification'),
-              onPressed: () => showModalBottomSheet<void>(
-                context: context,
-                useSafeArea: true,
-                isScrollControlled: true,
-                builder: (context) => Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: SingleChildScrollView(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          s.t(
-                            'Dominio y comprobación',
-                            'Domain and verification',
-                          ),
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        const SizedBox(height: 16),
-                        SelectableText(details),
-                        const SizedBox(height: 16),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
+              onPressed: () => showResultDetails(context, result, s),
               icon: const Icon(Icons.info_outline_rounded, size: 19),
             ),
           IconButton(
             tooltip: s.t('Copiar resultado', 'Copy result'),
-            onPressed: () => Clipboard.setData(
-              ClipboardData(text: latex.isNotEmpty ? latex : plain),
-            ),
+            onPressed: () => copyResult(result),
             icon: const Icon(Icons.copy_rounded, size: 18),
           ),
         ],

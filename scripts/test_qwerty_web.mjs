@@ -33,7 +33,7 @@ try {
    async function calculate(variable,expected) {
     const [response]=await Promise.all([page.waitForResponse(r=>r.url().endsWith('/api/v1/calculate')&&r.request().method()==='POST'),button('Resolver').click()]);
     assert.equal(response.status(),200);assert.equal(response.request().postDataJSON().variable,variable);
-    assert.equal((await response.json()).text,expected);await button('Copiar resultado').waitFor();await button('Resolver').click({trial:true});
+    assert.equal((await response.json()).text,expected);await frame.getByRole('button',{name:'Copiar resultado',exact:true}).waitFor();await button('Resolver').click({trial:true});
    }
    await tab('Científico').click();
    for(const label of ['x','y','z'])assert(await key(label).isVisible());

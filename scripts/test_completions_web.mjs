@@ -115,7 +115,7 @@ try {
     await key(frame(),'2').click();
     await frame().waitForFunction(() => document.getElementById('mf').value === '\\frac12');
     await button('Resolver').click();
-    await page.getByText('Exacto',{exact:true}).waitFor();
+    await frame().getByText('Exacto',{exact:true}).waitFor();
     assert.equal(await hint('Completar').count(),0);
     await page.screenshot({path:out+'/completion-fraction-mobile.png'});
   });

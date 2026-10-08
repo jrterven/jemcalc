@@ -5,6 +5,7 @@ import 'package:web/web.dart' as web;
 import '../core/palette.dart';
 import '../math/completion.dart';
 import 'editor_completion.dart';
+import 'editor_result.dart';
 
 class MathEditor extends StatefulWidget {
   const MathEditor({
@@ -12,6 +13,9 @@ class MathEditor extends StatefulWidget {
     this.focusRequest = 0,
     this.completions = const [],
     this.onCompletion,
+    this.result,
+    this.onCopyResult,
+    this.onResultDetails,
     required this.latex,
     required this.language,
     required this.showKeyboard,
@@ -25,6 +29,8 @@ class MathEditor extends StatefulWidget {
   final VoidCallback onSubmit;
   final List<ExpressionCompletion> completions;
   final ValueChanged<ExpressionCompletion>? onCompletion;
+  final Map<String, dynamic>? result;
+  final VoidCallback? onCopyResult, onResultDetails;
   @override
   State<MathEditor> createState() => _MathEditorState();
 }
@@ -63,6 +69,9 @@ class _MathEditorState extends State<MathEditor> {
       } else if (data['type'] == 'completion') {
         final suggestion = selectedEditorCompletion(data, widget.completions);
         if (suggestion != null) widget.onCompletion?.call(suggestion);
+      } else if (matchesEditorResult(data, widget.result)) {
+        if (data['type'] == 'copyResult') widget.onCopyResult?.call();
+        if (data['type'] == 'resultDetails') widget.onResultDetails?.call();
       }
     }).toJS;
     web.window.addEventListener('message', listener);
@@ -110,6 +119,7 @@ class _MathEditorState extends State<MathEditor> {
           'language': widget.language,
           'keyboard': widget.showKeyboard,
           'focusRequest': widget.focusRequest,
+          'result': editorResultConfiguration(widget.result, widget.language),
           'completion': editorCompletionConfiguration(
             widget.completions,
             widget.language,

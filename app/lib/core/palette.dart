@@ -98,6 +98,14 @@ abstract final class JemPalette {
           ? '#484848'
           : '#ffdce2',
       'line': hex(colors.outlineVariant),
+      'result': hex(
+        Color.alphaBlend(
+          colors.primaryContainer.withValues(alpha: .45),
+          colors.brightness == Brightness.dark
+              ? colors.surface
+              : colors.surfaceContainerLow,
+        ),
+      ),
     };
   }
 }

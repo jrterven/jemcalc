@@ -55,6 +55,12 @@ El teclado **Científico** incluye `x`, `y` y `z`. **ABC** abre un QWERTY con le
 
 ![Teclado QWERTY para escribir variables y completar ecuaciones](docs/screenshots/qwerty.png)
 
+El resultado aparece **encima del teclado**, junto a la ecuación, y conserva los botones de copiar y consultar su dominio y comprobación. Las teclas mantienen su posición durante el cálculo, al recibir el resultado y al seguir escribiendo o limpiar la pantalla. Los resultados largos se desplazan dentro de su tarjeta; en pantallas pequeñas también puedes desplazar el visor superior para consultar la ecuación.
+
+<p align="center">
+  <img src="docs/screenshots/resultado.png" alt="Resultado exacto encima del teclado, con botón para copiar" width="320">
+</p>
+
 - **Calcular** evalúa aritmética racional exacta o aproximaciones numéricas locales.
 - Si quedó seleccionado **Resolver**, una expresión puramente numérica también se calcula localmente: `18.33 × 12` da `5499/25`, equivalente a `219.96`. Una igualdad explícita o una expresión con incógnitas conserva la resolución de ecuaciones; las operaciones de cálculo como derivar o integrar siguen respetando la selección.
 - **Exacto**, **Simplificar**, **Expandir** y **Factorizar** usan el CAS.
@@ -181,7 +187,7 @@ El backend de desarrollo requiere que la Mac siga encendida y sea accesible para
 
 ### Instalar el APK Android sin herramientas de desarrollo
 
-Desde el teléfono, abre [Instalar Jem Calc para Android](https://calc.jemailabs.com/android). Introduce la clave del piloto si se solicita; al iniciar sesión volverás a la página de instalación. Pulsa **Descargar APK** (versión 1.0.8, compilación 10), abre el archivo y, si Android lo solicita, permite a ese navegador instalar aplicaciones de esa fuente. No requiere depuración USB. Si lo abriste dentro de otra app y no comienza la descarga, abre la página en Chrome.
+Desde el teléfono, abre [Instalar Jem Calc para Android](https://calc.jemailabs.com/android). Introduce la clave del piloto si se solicita; al iniciar sesión volverás a la página de instalación. Pulsa **Descargar APK** (versión 1.0.9, compilación 11), abre el archivo y, si Android lo solicita, permite a ese navegador instalar aplicaciones de esa fuente. No requiere depuración USB. Si lo abriste dentro de otra app y no comienza la descarga, abre la página en Chrome.
 
 La app ya apunta al servidor alojado. Introduce el token del piloto facilitado por el administrador en **Configuración → Token del piloto**, guarda los cambios y prueba `x+1=2`. El token nativo es diferente de la clave de acceso de la web y no está dentro del instalador.
 
@@ -197,7 +203,7 @@ keyPassword=TU_CONTRASENA_PRIVADA
 Desde `app/`, con los certificados opcionales `assets/pilot/server.pem` y `server.der` guardados temporalmente fuera de los assets para una distribución de producción:
 
 ```sh
-flutter build apk --release --build-name=1.0.8 --build-number=10 \
+flutter build apk --release --build-name=1.0.9 --build-number=11 \
   --dart-define=PILOT_URL=https://calc.jemailabs.com/api
 ```
 
@@ -278,6 +284,7 @@ node scripts/test_graph_systems_web.mjs
 node scripts/test_qwerty_web.mjs
 node scripts/test_numeric_solve_web.mjs
 node scripts/test_completions_web.mjs
+node scripts/test_results_web.mjs
 ```
 
 Los scripts usan Chrome instalado. Si el módulo está en otro entorno, define `PLAYWRIGHT_MODULE` con la ruta absoluta a su `index.mjs`. Los informes y capturas se guardan en `output/playwright/`, excluido de Git.

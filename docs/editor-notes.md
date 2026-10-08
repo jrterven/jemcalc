@@ -2,6 +2,14 @@
 
 El editor usa `app/assets/editor/index.html` y MathLive 0.111.0 empaquetado en `app/assets/mathlive`. La prueba utiliza Chrome en un perfil temporal, sirve únicamente los assets locales y bloquea cualquier solicitud fuera de localhost. No utiliza proveedores de reconocimiento, APIs facturables ni contenido de otras aplicaciones.
 
+## Resultados encima del teclado — 8 de octubre de 2026
+
+En modo Teclado, el resultado pertenece al mismo visor HTML que la ecuación, encima de las sugerencias y las teclas. El visor cede espacio y se desplaza en pantallas pequeñas; el resultado tiene su propio desplazamiento para fórmulas largas. El resultado usa `MathLive.convertLatexToMarkup` y los estilos estáticos empaquetados, sin crear un segundo campo editable. Los modos sin teclado conservan la tarjeta Flutter.
+
+`editor_result.dart` comparte estado, etiquetas, copia y detalles entre Android/iOS y web. Los mensajes de los botones incluyen la identidad del resultado visible y se ignoran si este ya cambió. El botón Resolver conserva una altura fija incluso al mostrar el indicador de espera, evitando que el contenedor desplace las teclas durante una solicitud al CAS.
+
+`scripts/test_results_web.mjs` comprueba las coordenadas de las teclas y del iframe al calcular, copiar, editar, completar y limpiar; comprueba también el desplazamiento de un resultado largo, el cálculo remoto y el acceso a los detalles. Usa ambos temas y pantallas de 320×600, 390×844 y 1200×850. `WEB_TEST_OFFLINE_ONLY=1` omite únicamente el recorrido del CAS.
+
 ## Sugerencias y estabilidad del teclado — 8 de octubre de 2026
 
 La barra de sugerencias pertenece al HTML compartido del editor y se coloca entre la ecuación y las pestañas del teclado. Su altura se descuenta únicamente del visor flexible de la ecuación; no cambia el tamaño del WebView/iframe ni la posición de las teclas. Las opciones múltiples se desplazan horizontalmente dentro de la barra. Los modos sin teclado conservan el aviso Flutter y su acceso a la ventana de edición, cuyo teclado usa la misma barra HTML.

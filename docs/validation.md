@@ -2,6 +2,14 @@
 
 Fecha del registro: **6 de octubre de 2026**. Resultados automatizados, recorridos en dispositivos y pendientes del piloto privado.
 
+## Resultados encima del teclado — 8 de octubre de 2026
+
+Versión **1.0.9+11**: el resultado del modo Teclado se muestra dentro del visor superior compartido por Android, iOS y web. Conserva formato matemático, aproximación, copia y acceso al dominio y comprobación. Los resultados largos se desplazan dentro de la tarjeta; el visor de la ecuación también puede desplazarse en pantallas pequeñas. El botón Resolver mantiene su altura mientras espera al CAS.
+
+Pasaron el analizador, **62 pruebas Flutter** de presentación del resultado/sugerencias/modelo y **15 pruebas** del gateway. Compilaron web, APK release firmado e iOS profile. Chrome comprobó teclas e iframe inmóviles en **320×600, 390×844 y 1200×850**, con ambos temas: recibir el resultado, copiar el valor exacto, seguir escribiendo, mostrar sugerencias, desplazar `80!` y limpiar. Se comprobó también la espera de una solicitud real al CAS, `d(x²)/dx = 2x` y el acceso a sus detalles. Los seis recorridos existentes de sugerencias pasaron en local, omitiendo únicamente la integral remota. La descarga privada del APK se completó, incluida la redirección tras un intento de clave incorrecta, y su SHA-256 coincidió con el instalador firmado.
+
+El Android no estaba conectado. El iPad estaba emparejado, pero bloqueado y no permitió iniciar la prueba; el usuario pidió continuar sin comprobación física. Las compilaciones móviles no equivalen a una prueba en los dispositivos. Evidencias locales: `output/playwright/result-web-results.json`, `result-stable-390-light.png`, `result-stable-390-dark.png` y `android-result-keyboard-download-results.json`. El README incluye la captura nueva del resultado.
+
 ## Teclado fijo con sugerencias — 8 de octubre de 2026
 
 Versión **1.0.8+10**: las sugerencias se muestran dentro del editor, entre la ecuación y las pestañas del teclado, tanto en la pantalla principal como en la ventana de edición. Aparecer, desaparecer o cambiar de una a varias opciones solo modifica el espacio del visor de la ecuación. Los adaptadores Android/iOS y web usan la misma configuración y validan cada selección contra la propuesta vigente.

@@ -87,8 +87,8 @@ try {
       await frame().waitForFunction(value => document.getElementById('mf').value === value, expected);
     }
     await button('Resolver').click();
-    await page.getByText('Exacto', { exact: true }).waitFor();
-    assert((await body()).includes('3'));
+    await frame().getByText('Exacto', { exact: true }).waitFor();
+    assert.equal(await frame().locator('#result-math').evaluate(el=>el.dataset.latex), '3');
   });
   await check('symbolic equation through TLS backend proxy', async () => {
     await type('x+1=2');
@@ -100,7 +100,7 @@ try {
     const data = await r.json();
     assert.equal(data.latex, '\\left\\{1\\right\\}');
     assert.equal(data.verification.status, 'verified');
-    await button('Copiar resultado').waitFor();
+    await frame().getByRole('button',{name:'Copiar resultado',exact:true}).waitFor();
   });
   await check('graphs hide/show without deleting and survive reload', async () => {
     await type('x^2');
@@ -135,7 +135,7 @@ try {
     await button('Añadir desde el editor').click();
     await button('Resolver').waitFor();
     await page.waitForTimeout(350);
-    assert((await body()).includes('3'));
+    assert.equal(await frame().locator('#result-math').evaluate(el=>el.dataset.latex), '3');
     assert((await body()).includes('1'));
   });
   await check('handwriting strokes and keyboard restoration', async () => {

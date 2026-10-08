@@ -51,11 +51,15 @@ try {
       // Once loaded, arithmetic must work even with the entire network offline.
       await context.setOffline(true);
       await button('Resolver').last().click();
-      await page.getByText('Exacto', {exact: true}).waitFor();
-      await button('Copiar resultado').click();
-      assert.equal(await page.evaluate(() => navigator.clipboard.readText()), '\\frac{5499}{25}');
+      await frame.getByText('Exacto', {exact: true}).waitFor();
+      await frame.getByRole('button',{name:'Copiar resultado',exact:true}).click();
+      for(let attempt=0;attempt<40;attempt++) {
+        if(await page.evaluate(()=>navigator.clipboard.readText())==='\\frac{5499}{25}')break;
+        await page.waitForTimeout(50);
+      }
+      assert.equal(await page.evaluate(()=>navigator.clipboard.readText()),'\\frac{5499}{25}');
       assert.equal(requests.length, 0, 'numeric arithmetic must stay local');
-      assert.equal(await page.getByText('Sin solución real', {exact: true}).count(), 0);
+      assert.equal(await frame.getByText('Sin solución real', {exact: true}).count(), 0);
       await page.screenshot({path: `${out}/numeric-solve-${colorScheme}.png`});
       await context.setOffline(false);
 
@@ -71,7 +75,7 @@ try {
         assert.equal(response.status(), 200);
         assert.equal(response.request().postDataJSON().operation, 'solve');
         assert.equal((await response.json()).text, '{1}');
-        await button('Copiar resultado').waitFor();
+        await frame.getByRole('button',{name:'Copiar resultado',exact:true}).waitFor();
       }
 
       if (process.env.WEB_TEST_NUMERIC_API === '1') {
