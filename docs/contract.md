@@ -20,6 +20,8 @@ All numeric literals are decimal strings. The AST is the only computational inpu
 
 Request: `{"ast":NODE,"operation":"exact","variable":"x","variables":["x","y"],"angleMode":"rad","domain":"real","precision":30,"order":1,"lower":null,"upper":null,"approach":null,"direction":"both"}`. Optional fields use these defaults. Operations: `evaluate`, `exact`, `simplify`, `expand`, `factor`, `solve`, `differentiate`, `integrate`, `limit`. Angle mode `rad` or `deg`. `evaluate` on a calculus AST executes the represented operation.
 
+`solve` evaluates a purely numeric expression (numbers/constants and numeric unary, binary or function arguments), matching the app when Solve remains selected after an earlier equation. Explicit equations/systems and expressions containing symbols retain equation-solving semantics, even when symbols cancel. Calculus operations remain explicit. For example, numeric `18.33 * 12` returns the exact rational `5499/25`; `2 = 3` still returns `empty`.
+
 Response: `{"status":"exact","latex":"...","text":"...","approximation":null,"conditions":[],"verification":{"status":"notApplicable","detail":"..."},"engine":"sympy","engineVersion":"..."}`.
 
 Statuses: `exact`, `approximate`, `empty`, `unresolved`, `domainError`, `timeout`, `unsupported`, `error`. Verification statuses: `verified`, `numeric`, `inconclusive`, `notApplicable`. Human-readable provider errors may be English; app maps known statuses to localized labels.

@@ -283,13 +283,18 @@ class AppModel extends ChangeNotifier {
     _notify();
     try {
       final ast = parseLatex(source);
+      final needsCas = requiresCas(ast);
       var op = operation;
+      // Solve can remain selected after an earlier equation. A purely numeric
+      // expression has no unknown to solve for: evaluate it, including offline.
+      // Explicit equalities and expressions containing symbols keep solve semantics.
+      if (op == 'solve' && !needsCas) op = 'evaluate';
       if (op == 'evaluate' &&
           (ast['type'] == 'equation' || ast['type'] == 'system')) {
         op = 'solve';
       }
       if (op == 'evaluate' &&
-          requiresCas(ast) &&
+          needsCas &&
           !['derivative', 'integral', 'limit'].contains(ast['type'])) {
         op = 'simplify';
       }
@@ -303,7 +308,7 @@ class AppModel extends ChangeNotifier {
           ? symbols.single
           : requestedVariable;
       Map<String, dynamic> answer;
-      if (op == 'evaluate' && !requiresCas(ast)) {
+      if (op == 'evaluate' && !needsCas) {
         final local = evaluateLocal(ast, angleMode: angle);
         answer = {
           'status': local.exact ? 'exact' : 'approximate',

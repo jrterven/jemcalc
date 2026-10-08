@@ -54,6 +54,7 @@ El teclado **Científico** incluye `x`, `y` y `z`. **ABC** abre un QWERTY con le
 ![Teclado QWERTY para escribir variables y completar ecuaciones](docs/screenshots/qwerty.png)
 
 - **Calcular** evalúa aritmética racional exacta o aproximaciones numéricas locales.
+- Si quedó seleccionado **Resolver**, una expresión puramente numérica también se calcula localmente: `18.33 × 12` da `5499/25`, equivalente a `219.96`. Una igualdad explícita o una expresión con incógnitas conserva la resolución de ecuaciones; las operaciones de cálculo como derivar o integrar siguen respetando la selección.
 - **Exacto**, **Simplificar**, **Expandir** y **Factorizar** usan el CAS.
 - También puedes resolver ecuaciones, derivar, integrar y calcular límites.
 - Cambia entre **RAD** y **DEG** para las funciones trigonométricas.
@@ -178,7 +179,7 @@ El backend de desarrollo requiere que la Mac siga encendida y sea accesible para
 
 ### Instalar el APK Android sin herramientas de desarrollo
 
-Desde el teléfono, abre [Instalar Jem Calc para Android](https://calc.jemailabs.com/android). Introduce la clave del piloto si se solicita; al iniciar sesión volverás a la página de instalación. Pulsa **Descargar APK** (versión 1.0.6, compilación 8), abre el archivo y, si Android lo solicita, permite a ese navegador instalar aplicaciones de esa fuente. No requiere depuración USB. Si lo abriste dentro de otra app y no comienza la descarga, abre la página en Chrome.
+Desde el teléfono, abre [Instalar Jem Calc para Android](https://calc.jemailabs.com/android). Introduce la clave del piloto si se solicita; al iniciar sesión volverás a la página de instalación. Pulsa **Descargar APK** (versión 1.0.7, compilación 9), abre el archivo y, si Android lo solicita, permite a ese navegador instalar aplicaciones de esa fuente. No requiere depuración USB. Si lo abriste dentro de otra app y no comienza la descarga, abre la página en Chrome.
 
 La app ya apunta al servidor alojado. Introduce el token del piloto facilitado por el administrador en **Configuración → Token del piloto**, guarda los cambios y prueba `x+1=2`. El token nativo es diferente de la clave de acceso de la web y no está dentro del instalador.
 
@@ -194,7 +195,7 @@ keyPassword=TU_CONTRASENA_PRIVADA
 Desde `app/`, con los certificados opcionales `assets/pilot/server.pem` y `server.der` guardados temporalmente fuera de los assets para una distribución de producción:
 
 ```sh
-flutter build apk --release --build-name=1.0.6 --build-number=8 \
+flutter build apk --release --build-name=1.0.7 --build-number=9 \
   --dart-define=PILOT_URL=https://calc.jemailabs.com/api
 ```
 
@@ -273,6 +274,7 @@ node scripts/test_web.mjs
 node scripts/test_editor.mjs
 node scripts/test_graph_systems_web.mjs
 node scripts/test_qwerty_web.mjs
+node scripts/test_numeric_solve_web.mjs
 ```
 
 Los scripts usan Chrome instalado. Si el módulo está en otro entorno, define `PLAYWRIGHT_MODULE` con la ruta absoluta a su `index.mjs`. Los informes y capturas se guardan en `output/playwright/`, excluido de Git.

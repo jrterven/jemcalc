@@ -2,6 +2,14 @@
 
 Fecha del registro: **6 de octubre de 2026**. Resultados automatizados, recorridos en dispositivos y pendientes del piloto privado.
 
+## Corrección de cálculo numérico — 8 de octubre de 2026
+
+Versión **1.0.7+9**: una expresión numérica como `18.33 × 12` se evalúa aunque haya quedado seleccionada la operación Resolver. Resultado exacto: `5499/25 = 219.96`. Las igualdades explícitas y las expresiones con variables siguen usando el solucionador, incluso si una variable desaparece por cancelación. El servidor también acepta correctamente las solicitudes de las apps anteriores.
+
+Pasaron el analizador, **117 pruebas Flutter** del modelo, motor y contrato, y las pruebas Python de CAS, contrato compartido, API y acceso privado. Se compilaron web, APK release firmado e iOS profile. Chrome comprobó el producto sin conexión en temas claro y oscuro; contra producción también verificó `x+1=2`, el cálculo enviado por clientes anteriores y la descarga completa del APK con SHA-256 coincidente. El API conservó el rechazo de solicitudes sin autenticación y respondió correctamente usando el token nativo.
+
+No había Android conectado ni iPad disponible para validar físicamente esta versión. El backend LAN tampoco estaba disponible; las pruebas remotas se hicieron contra `https://calc.jemailabs.com`. Evidencias locales: `output/playwright/numeric-solve-results.json`, `numeric-solve-light.png`, `numeric-solve-dark.png` y `android-numeric-solve-download-results.json`. El despliegue vigente y su reversión se documentan en [deploy/README.md](../deploy/README.md); los apartados siguientes conservan el registro original del 6 de octubre.
+
 ## Despliegue privado en calc.jemailabs.com
 
 Se publicó **https://calc.jemailabs.com** en `juan@prod`, con la elección explícita del usuario de mantener un piloto privado con clave. El registro A de Cloudflare apunta al servidor dedicado con proxy activo; se verificó SSL **Full (strict)** y el certificado wildcard del origen. Se agregó únicamente el virtual host de calc y un contenedor independiente, con listener `127.0.0.1:5188`, estado healthy y reinicio automático. Jemailabs, JemNotebook, JemIntel y JemClip siguieron respondiendo tras la recarga de Nginx.
@@ -12,7 +20,7 @@ En Chrome contra el dominio real pasaron los **7 recorridos**: teclado/cálculo 
 
 El Android conservó su token y borrador, guardó **https://calc.jemailabs.com/api**, comprobó «Servidor disponible · ok» y derivó `sin(x²)` → `2x cos(x²)` exactamente desde el servidor dedicado; se restauró la operación Calcular. Evidencias: `.local/android-production-connection.png`, `android-production-cas.png` y `android-production-final.png`. El modelo real del iPad también guardó la URL pública y resolvió `x+1=2` → `{1}` exacto por SymPy; se restauraron su borrador y operación. Evidencia: `.local/ipad-production-cas.json`. Después se compiló, instaló e inició nuevamente el iPad en **profile**, conservando esos ajustes.
 
-La versión activa del servidor es `jemcalc:20261006-pilot-3`. Mantenimiento y recuperación: `deploy/README.md`. Las aplicaciones ya no necesitan que la Mac esté encendida ni compartir su Wi-Fi; las funciones remotas necesitan Internet. El historial sigue siendo local a cada dispositivo/origen y no se sincronizó con el nuevo dominio.
+La versión del servidor registrada el 6 de octubre fue `jemcalc:20261006-pilot-3`. Mantenimiento y recuperación: `deploy/README.md`. Las aplicaciones ya no necesitan que la Mac esté encendida ni compartir su Wi-Fi; las funciones remotas necesitan Internet. El historial sigue siendo local a cada dispositivo/origen y no se sincronizó con el nuevo dominio.
 
 Ante una pestaña del usuario que terminó en `file:///access`, se sustituyeron las redirecciones relativas de acceso, login y logout por URLs HTTPS absolutas construidas desde el origen configurado. Se verificó públicamente `Location: https://calc.jemailabs.com/access`; las siete pruebas del gateway incluyen todos esos destinos y rechazan el uso de cabeceras reenviadas para construirlos. Una sesión nueva de Chrome siguió la redirección, inició sesión con clave y realizó un cálculo autenticado correctamente. Evidencia: `output/playwright/production-redirect-check.json`. Se abrió una pestaña HTTPS nueva para el usuario; no se accedió al archivo local inexistente.
 

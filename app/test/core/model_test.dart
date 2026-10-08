@@ -91,6 +91,72 @@ void main() {
     expect(m.variableOptions, contains('q'));
   });
 
+  group('Numeric arithmetic with Solve still selected', () {
+    for (final entry in {
+      r'18.33\times12': '5499/25',
+      '0': '0',
+      '-2+1': '-1',
+      r'\frac{1}{3}': '1/3',
+    }.entries) {
+      test(
+        '${entry.key} evaluates locally and records the actual operation',
+        () async {
+          final m = model()
+            ..setOperation('solve')
+            ..edit(entry.key);
+          await m.calculate();
+          expect(api.calls, isEmpty);
+          expect(m.error, isNull);
+          expect(m.result?['status'], 'exact');
+          expect(m.result?['text'], entry.value);
+          expect(m.result?['engine'], 'dart');
+          expect(store.entries.single['operation'], 'evaluate');
+          expect(store.entries.single['source'], entry.key);
+        },
+      );
+    }
+
+    test('retains degree mode and reports undefined arithmetic', () async {
+      final m = model()
+        ..setOperation('solve')
+        ..toggleAngle()
+        ..edit(r'\sin(30)');
+      await m.calculate();
+      expect(double.parse(m.result!['text'] as String), closeTo(.5, 1e-14));
+      expect(store.entries.single['angleMode'], 'deg');
+      m.edit(r'\frac{1}{0}');
+      await m.calculate();
+      expect(m.error, isNotNull);
+      expect(m.result, isNull);
+      expect(store.entries, hasLength(1));
+      expect(api.calls, isEmpty);
+    });
+
+    for (final expression in ['2=3', '2=2', 'x-x', 'x/x', 'x-2', 'x=1;y=2']) {
+      test('$expression still uses the equation solver', () async {
+        final m = model()
+          ..setOperation('solve')
+          ..edit(expression);
+        final pending = m.calculate();
+        expect(api.calls.single.body['operation'], 'solve');
+        api.calls.single.response.complete(answer());
+        await pending;
+      });
+    }
+
+    for (final operation in ['differentiate', 'integrate']) {
+      test('$operation of a constant remains explicit calculus', () async {
+        final m = model()
+          ..setOperation(operation)
+          ..edit('12');
+        final pending = m.calculate();
+        expect(api.calls.single.body['operation'], operation);
+        api.calls.single.response.complete(answer());
+        await pending;
+      });
+    }
+  });
+
   test('QWERTY variables can be selected for calculus and persist', () async {
     FlutterSecureStorage.setMockInitialValues({});
     final m = model()

@@ -361,10 +361,28 @@ def limit_value(body: sp.Expr, variable: sp.Symbol, target: sp.Expr, direction: 
     return values[0]
 
 
+def is_numeric_expression(node: dict[str, Any]) -> bool:
+    """Inspect the original AST; cancellation must not erase an unknown/domain."""
+    kind = node["type"]
+    if kind in ("number", "constant"):
+        return True
+    if kind == "unary":
+        return is_numeric_expression(node["arg"])
+    if kind == "binary":
+        return is_numeric_expression(node["left"]) and is_numeric_expression(node["right"])
+    if kind == "call":
+        return all(is_numeric_expression(arg) for arg in node["args"])
+    return False
+
+
 def compute(request: CalculateRequest) -> CalculateResponse:
     builder = Builder(request.angleMode)
     node = request.ast.model_dump()
     operation = request.operation
+    # Older installed clients can send numeric arithmetic with Solve still
+    # selected. Match the shared app's numeric fallback without inventing = 0.
+    if operation == "solve" and is_numeric_expression(node):
+        operation = "evaluate"
     variable = builder.symbol(request.variable)
     order = request.order
     lower = request.lower.model_dump() if request.lower else None

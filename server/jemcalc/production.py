@@ -26,7 +26,7 @@ from .config import get_settings
 COOKIE = "__Host-jemcalc"
 SESSION_SECONDS = 7 * 24 * 3600
 HERE = Path(__file__).parent
-ANDROID_APK = "jemcalc-1.0.6-8.apk"
+ANDROID_APK = "jemcalc-1.0.7-9.apk"
 
 
 def login_destination(value: str | None):

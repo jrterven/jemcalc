@@ -46,6 +46,35 @@ def test_constants_exact_and_approximation_separate():
     assert answer["approximation"].startswith("1.41421356237")
 
 
+@pytest.mark.parametrize("ast, expected", [
+    (b("*", n("18.33"), n(12)), "5499/25"),
+    (n(0), "0"),
+    (b("/", n(1), n(3)), "1/3"),
+    ({"type": "unary", "op": "-", "arg": n(2)}, "-2"),
+    (f("sin", {"type": "constant", "name": "pi"}), "0"),
+])
+def test_solve_evaluates_numeric_expressions_from_older_clients(ast, expected):
+    answer = run(ast, operation="solve")
+    assert answer["status"] == "exact"
+    assert answer["text"] == expected
+
+
+def test_numeric_solve_preserves_angles_and_domain_errors():
+    assert run(f("sin", n(30)), operation="solve", angleMode="deg")["text"] == "1/2"
+    assert run(b("/", n(1), n(0)), operation="solve")["status"] == "domainError"
+    assert run(f("sqrt", n(-1)), operation="solve")["status"] == "domainError"
+
+
+def test_numeric_fallback_does_not_change_equations_or_cancelled_symbols():
+    assert run(eq(n(2), n(3)), operation="solve")["status"] == "empty"
+    assert run(eq(n(2), n(2)), operation="solve")["text"] == "Reals"
+    assert run(b("-", s(), s()), operation="solve")["text"] == "Reals"
+    assert run(b("/", s(), s()), operation="solve")["status"] == "empty"
+    assert run(b("-", s(), n(2)), operation="solve")["text"] == "{2}"
+    assert run(n(12), operation="differentiate")["text"] == "0"
+    assert run(n(12), operation="integrate")["text"] == "12*x + C"
+
+
 @pytest.mark.parametrize("ast", [
     b("/", n(1), n(0)), b("/", n(1), b("-", n(2), n(2))),
     b("^", n(0), n(0)), b("^", n(0), n(-1)),
