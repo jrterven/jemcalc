@@ -19,6 +19,7 @@ const button = name => page.getByRole('button', {name, exact:true});
 const frame = () => page.frames().find(f => f.url().includes('/editor/index.html'));
 const math = f => f.locator('#mf');
 const value = f => math(f).evaluate(el => el.value);
+const hint = name => frame().getByRole('button', {name, exact:true});
 const key = (f,label) => f.locator(`.MLK__layer.is-visible [aria-label=${JSON.stringify(label)}]`);
 async function input(latex) {
   await frame().evaluate(latex => {
@@ -26,7 +27,10 @@ async function input(latex) {
     document.getElementById('mf').dispatchEvent(new Event('input', {bubbles:true}));
   }, latex);
 }
-async function check(name, fn) { await fn(); results.push(name); console.log('PASS',name); }
+async function check(name, fn) {
+  if (process.env.WEB_TEST_ONLY && !name.includes(process.env.WEB_TEST_ONLY)) return;
+  await fn(); results.push(name); console.log('PASS',name);
+}
 try {
   await page.goto(base);
   if (new URL(page.url()).pathname === '/access') {
@@ -42,36 +46,83 @@ try {
   if (await toggle.count()) await toggle.evaluate(el=>el.click());
   await button('Resolver').waitFor();
   await frame().waitForFunction(() => typeof window.setDraft === 'function');
-  await check('integral hint requires a tap and CAS calculates 1/3 only on Resolve', async () => {
+  await check('completion changes never move the keyboard while typing', async () => {
+    for (const viewport of [{width:320,height:640},{width:390,height:844},{width:1200,height:850}]) {
+      await page.setViewportSize(viewport);
+      await input('');
+      await hint('Completar').waitFor({state:'hidden'});
+      await page.waitForTimeout(200);
+      const before = await key(frame(),'1').boundingBox();
+      const editorBefore = await page.locator('iframe').first().boundingBox();
+      const assertFixed = async () => {
+        const after = await key(frame(),'1').boundingBox();
+        const editorAfter = await page.locator('iframe').first().boundingBox();
+        for (const dimension of ['x','y','width','height']) {
+          assert(Math.abs(before[dimension]-after[dimension]) < 1, `key moved: ${dimension} ${before[dimension]} → ${after[dimension]}`);
+          assert(Math.abs(editorBefore[dimension]-editorAfter[dimension]) < 1, `editor resized: ${dimension}`);
+        }
+      };
+      await key(frame(),'1').click();
+      for (let i=0;i<3;i++) {
+        await key(frame(),'+').click();
+        await hint('Completar').waitFor();
+        await assertFixed();
+        const bar = await frame().locator('#completion').boundingBox();
+        const keyboard = await frame().locator('#keyboard').boundingBox();
+        assert(bar.y+bar.height <= keyboard.y+1, 'hint must appear above the keyboard');
+        await key(frame(),'2').click();
+        await hint('Completar').waitFor({state:'hidden'});
+        await assertFixed();
+      }
+      await input('\\int xyzt');
+      await hint('Añadir dx').waitFor();
+      await assertFixed();
+      // Several differential options scroll within the hint instead of resizing keys.
+      await frame().locator('#completion-actions').evaluate(el=>el.scrollLeft=el.scrollWidth);
+      await hint('Añadir dt').click();
+      await hint('Añadir dx').waitFor({state:'hidden'});
+      await assertFixed();
+      await input('x^{}');
+      await hint('Completar').waitFor();
+      await page.screenshot({path:`${out}/completion-stable-${viewport.width}.png`});
+      await assertFixed();
+    }
+    await page.setViewportSize({width:390,height:844});
+  });
+  await check(process.env.WEB_TEST_OFFLINE_ONLY === '1'
+    ? 'integral hint requires an explicit tap (CAS not requested)'
+    : 'integral hint requires a tap and CAS calculates 1/3 only on Resolve', async () => {
     await input('\\int_0^1 x^2');
-    await button('Añadir dx').waitFor();
+    await hint('Añadir dx').waitFor();
     assert.equal(await value(frame()), '\\int_0^1 x^2');
     await page.screenshot({path:out+'/completion-integral-mobile.png'});
-    await button('Añadir dx').click();
+    await hint('Añadir dx').click();
     await frame().waitForFunction(() => document.getElementById('mf').value.includes('\\mathrm{d}x'));
-    const [response] = await Promise.all([
-      page.waitForResponse(r=>r.url().endsWith('/api/v1/calculate')),
-      button('Resolver').click(),
-    ]);
-    assert.equal(response.status(),200);
-    assert.equal((await response.json()).text,'1/3');
+    if (process.env.WEB_TEST_OFFLINE_ONLY !== '1') {
+      const [response] = await Promise.all([
+        page.waitForResponse(r=>r.url().endsWith('/api/v1/calculate')),
+        button('Resolver').click(),
+      ]);
+      assert.equal(response.status(),200);
+      assert.equal((await response.json()).text,'1/3');
+    }
   });
   await check('missing denominator opens and focuses its slot, then computes 1/2', async () => {
     await input('\\frac{1}{}');
-    await button('Completar').click();
+    await hint('Completar').click();
     await frame().waitForFunction(() => lastFocusRequest === 1);
     await frame().waitForFunction(() => mf.shadowRoot.activeElement?.getAttribute('part') === 'keyboard-sink');
     await key(frame(),'2').click();
     await frame().waitForFunction(() => document.getElementById('mf').value === '\\frac12');
     await button('Resolver').click();
     await page.getByText('Exacto',{exact:true}).waitFor();
-    assert.equal(await button('Completar').count(),0);
+    assert.equal(await hint('Completar').count(),0);
     await page.screenshot({path:out+'/completion-fraction-mobile.png'});
   });
   await check('multiple integral variables remain explicit choices', async () => {
     await input('\\int xy');
-    await button('Añadir dx').waitFor();
-    await button('Añadir dy').click();
+    await hint('Añadir dx').waitFor();
+    await hint('Añadir dy').click();
     await frame().waitForFunction(() => document.getElementById('mf').value.endsWith('\\mathrm{d}y'));
   });
   await check('voice-mode completion opens manual sheet, retains mode and fills exponent', async () => {
@@ -83,8 +134,12 @@ try {
     await modal.waitForURL('**/editor/index.html');
     await modal.waitForFunction(() => lastFocusRequest === 2);
     await modal.waitForFunction(() => mf.shadowRoot.activeElement?.getAttribute('part') === 'keyboard-sink');
+    const modalBefore = await key(modal,'3').boundingBox();
     await key(modal,'3').click();
     await modal.waitForFunction(() => document.getElementById('mf').value === 'x^3');
+    await modal.getByRole('button',{name:'Completar',exact:true}).waitFor({state:'hidden'});
+    const modalAfter = await key(modal,'3').boundingBox();
+    assert(Math.abs(modalBefore.y-modalAfter.y)<1, 'modal keyboard moved after completing exponent');
     await button('Cerrar').click();
     await button('Comenzar dictado').waitFor();
     assert.equal(await value(frame()),'x^3');
@@ -94,7 +149,7 @@ try {
   });
   await check('limit destination is editable and all keyboard labels fit', async () => {
     await input('\\lim_{x\\to} x^2');
-    await button('Completar').click();
+    await hint('Completar').click();
     await frame().waitForFunction(() => lastFocusRequest === 3);
     await frame().waitForFunction(() => mf.shadowRoot.activeElement?.getAttribute('part') === 'keyboard-sink');
     await key(frame(),'0').click();
@@ -104,7 +159,7 @@ try {
     await page.screenshot({path:out+'/completion-calculus-mobile.png'});
     await page.setViewportSize({width:1200,height:850});
     await input('\\int xy');
-    await button('Añadir dy').waitFor();
+    await hint('Añadir dy').waitFor();
     await page.screenshot({path:out+'/completion-desktop.png'});
   });
   assert.deepEqual(errors,[]);

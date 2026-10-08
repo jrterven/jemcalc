@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../core/model.dart';
 import 'math_editor.dart';
-import 'completion_hint.dart';
 
 // A modal keeps the active input panel mounted, including a live voice session.
 Future<void> showEquationEditor(BuildContext context, AppModel model) async {
@@ -65,18 +64,14 @@ Future<void> showEquationEditor(BuildContext context, AppModel model) async {
                           child: MathEditor(
                             latex: model.latex,
                             focusRequest: model.editorFocusRequest,
+                            completions: model.completionSuggestions,
+                            onCompletion: model.applyCompletion,
                             language: model.language,
                             showKeyboard: true,
                             onChanged: model.edit,
                             onSubmit: closeEditor,
                           ),
                         ),
-                        if (model.completionSuggestions.isNotEmpty)
-                          CompletionHint(
-                            suggestions: model.completionSuggestions,
-                            strings: model.s,
-                            onSelected: model.applyCompletion,
-                          ),
                       ],
                     ),
                   ),

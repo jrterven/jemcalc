@@ -2,6 +2,14 @@
 
 Fecha del registro: **6 de octubre de 2026**. Resultados automatizados, recorridos en dispositivos y pendientes del piloto privado.
 
+## Teclado fijo con sugerencias — 8 de octubre de 2026
+
+Versión **1.0.8+10**: las sugerencias se muestran dentro del editor, entre la ecuación y las pestañas del teclado, tanto en la pantalla principal como en la ventana de edición. Aparecer, desaparecer o cambiar de una a varias opciones solo modifica el espacio del visor de la ecuación. Los adaptadores Android/iOS y web usan la misma configuración y validan cada selección contra la propuesta vigente.
+
+Pasaron el analizador, **100 pruebas Flutter** de sugerencias/modelo/widgets, **31 comprobaciones** del editor real y **15 pruebas** del gateway. Las compilaciones web, APK release firmado e iOS profile finalizaron correctamente. En Chrome se verificaron **seis recorridos** contra producción: teclas inmóviles mientras se escribe en 320×640, 390×844 y 1200×850; diferencial confirmado e integral por CAS; denominador editable; varios diferenciales; edición modal desde Voz; y destino de un límite. El editor aislado también mantuvo las teclas en 304×380 con ambos temas. La descarga privada del APK se completó y su SHA-256 coincidió con el archivo firmado.
+
+No había Android conectado ni iPad disponible para la comprobación física de esta versión. Evidencias locales: `output/editor-stable-keyboard-results.json`, `output/playwright/completion-web-results.json`, `completion-stable-390.png` y `android-stable-keyboard-download-results.json`. La captura de sugerencias del README se actualizó con la ubicación nueva.
+
 ## Corrección de cálculo numérico — 8 de octubre de 2026
 
 Versión **1.0.7+9**: una expresión numérica como `18.33 × 12` se evalúa aunque haya quedado seleccionada la operación Resolver. Resultado exacto: `5499/25 = 219.96`. Las igualdades explícitas y las expresiones con variables siguen usando el solucionador, incluso si una variable desaparece por cancelación. El servidor también acepta correctamente las solicitudes de las apps anteriores.

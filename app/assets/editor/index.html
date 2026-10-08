@@ -10,11 +10,45 @@ body{display:flex;flex-direction:column;overflow-y:auto}#field-wrap{padding:8px 
 #jem-abc .MLK__rows{--keycap-width:min(68px,calc((100cqw - 16px)/10));--_keycap-gap:2px;--_keycap-font-size:18px}
 #keyboard.hidden{display:none}body.compact #field-wrap{min-height:60px;padding:4px 8px}body.compact math-field{font-size:27px}
 @media(max-height:420px){#field-wrap{min-height:64px;padding:0 6px}}
-</style></head><body><div id="field-wrap"><math-field id="mf" aria-label="Equation" inputmode="none" math-virtual-keyboard-policy="manual"></math-field></div><div id="keyboard"></div>
+/* Only the equation viewport yields space to a hint. The keyboard stays pinned
+   to the editor's bottom, including while the suggestion appears/disappears. */
+body:not(.compact) #field-wrap{min-height:0}
+#completion{flex-shrink:0;display:flex;align-items:center;gap:8px;padding:2px 8px 4px;max-width:100%}
+#completion[hidden]{display:none}
+#completion-message{flex:1;min-width:0;font-size:12px;line-height:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#completion-actions{display:flex;gap:8px;min-width:0;flex:0 1 auto;overflow-x:auto;scrollbar-width:none}
+#completion.multiple{flex-direction:column;align-items:stretch;gap:2px}
+#completion-actions button{flex-shrink:0;min-height:40px;padding:6px 12px;border:1px solid var(--line);border-radius:20px;background:transparent;color:var(--accent);font:500 13px -apple-system,system-ui,sans-serif;white-space:nowrap;cursor:pointer}
+#completion-actions button:hover{background:var(--key-hover)}
+#completion-actions button:active{background:var(--key-pressed)}
+#completion-actions button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+</style></head><body><div id="field-wrap"><math-field id="mf" aria-label="Equation" inputmode="none" math-virtual-keyboard-policy="manual"></math-field></div><div id="completion" hidden><span id="completion-message"></span><div id="completion-actions"></div></div><div id="keyboard"></div>
 <script>
 MathfieldElement.fontsDirectory='../mathlive/fonts';MathfieldElement.soundsDirectory=null;
 const mf=document.getElementById('mf');const keyboard=document.getElementById('keyboard');let suppress=false;let ready=false;let lastLanguage=null;let keyboardWanted=false;let lastFocusRequest=0;
 function send(data){if(window.JemBridge)JemBridge.postMessage(JSON.stringify(data));else if(parent!==window)parent.postMessage(JSON.stringify({channel:'jem-editor',...data}),location.origin);}
+let lastCompletion;
+function configureCompletion(proposal){
+ const signature=JSON.stringify(proposal);
+ if(signature===lastCompletion)return;
+ lastCompletion=signature;
+ const bar=document.getElementById('completion'),actions=document.getElementById('completion-actions');
+ actions.replaceChildren();bar.hidden=!proposal?.actions?.length;
+ if(bar.hidden)return;
+ const message=document.getElementById('completion-message');
+ message.textContent=proposal.message;message.title=proposal.message;
+ bar.classList.toggle('multiple',proposal.actions.length>1);
+ for(const action of proposal.actions){
+  const button=document.createElement('button');button.type='button';button.textContent=action.label;
+  button.title=proposal.message;button.setAttribute('aria-describedby','completion-message');
+  button.addEventListener('mousedown',event=>event.preventDefault());
+  button.addEventListener('click',()=>{
+   mf.focus({preventScroll:true});
+   send({type:'completion',source:proposal.source,latex:action.latex,focusSlot:action.focusSlot});
+  });
+  actions.append(button);
+ }
+}
 // Keep the web iframe's keyboard inside its own editor instead of proxying it to Flutter's document.
 mf.mathVirtualKeyboardPolicy=parent===window?'manual':'sandboxed';
 window.mathVirtualKeyboard.container=keyboard;window.mathVirtualKeyboard.editToolbar='none';window.mathVirtualKeyboard.targetOrigin='*';
@@ -102,6 +136,7 @@ window.configure=function(c){
  if(!keyboardWanted)window.mathVirtualKeyboard.hide({animate:false});
  scheduleKeyboardSync();
  if(c.latex!==undefined && c.latex!==mf.value){suppress=true;mf.setValue(c.latex,{silenceNotifications:true});suppress=false;}
+ configureCompletion(c.completion??null);
  // Only a confirmed completion requests focus. Repeated model updates preserve the caret.
  if(keyboardWanted && c.focusRequest>0 && c.focusRequest!==lastFocusRequest){
   lastFocusRequest=c.focusRequest;mf.focus();mf.position=0;mf.executeCommand('moveToNextPlaceholder');

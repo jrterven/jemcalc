@@ -430,6 +430,32 @@ try {
       return { key: boxes[0], rowWidth: occupied };
     });
   }
+  await check('native completion bridge keeps keys fixed and requires a confirmed repair', async () => {
+    await page.setViewportSize({width:304,height:380});
+    const proposal={source:'x+',message:'Falta un término.',actions:[{label:'Completar',latex:'x+\\placeholder{}',focusSlot:true}]};
+    for (const dark of [false,true]) {
+      await config({dark,latex:'x+',completion:null});
+      const before=await visibleKey('1').boundingBox();
+      await config({dark,completion:proposal});
+      await page.getByRole('button',{name:'Completar',exact:true}).waitFor();
+      const after=await visibleKey('1').boundingBox();
+      assert(Math.abs(before.y-after.y)<1,'native editor keys moved on hint appearance');
+      const bar=await page.locator('#completion').boundingBox();
+      const keyboard=await page.locator('#keyboard').boundingBox();
+      assert(bar.y+bar.height<=keyboard.y+1,'hint is above keyboard');
+      assert(keyboard.y+keyboard.height<=380+1,'keyboard stays within compact viewport');
+      const submissionCount=await submits();
+      await page.getByRole('button',{name:'Completar',exact:true}).click();
+      assert.equal(await value(),'x+','bridge must not apply proposals itself');
+      assert.equal(await submits(),submissionCount,'completion must not submit');
+      assert.deepEqual(await page.evaluate(()=>jemEvents.filter(e=>e.type==='completion').at(-1)),{
+        type:'completion',source:'x+',latex:'x+\\placeholder{}',focusSlot:true,
+      });
+      await config({dark,completion:null});
+      assert(Math.abs(before.y-(await visibleKey('1').boundingBox()).y)<1,'keys moved on hint disappearance');
+    }
+  });
+
   await check('no JavaScript errors or external asset requests', async () => {
     assert.deepEqual(errors, []);
     assert.deepEqual(externalRequests, []);

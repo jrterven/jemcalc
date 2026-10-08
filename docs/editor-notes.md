@@ -2,6 +2,14 @@
 
 El editor usa `app/assets/editor/index.html` y MathLive 0.111.0 empaquetado en `app/assets/mathlive`. La prueba utiliza Chrome en un perfil temporal, sirve únicamente los assets locales y bloquea cualquier solicitud fuera de localhost. No utiliza proveedores de reconocimiento, APIs facturables ni contenido de otras aplicaciones.
 
+## Sugerencias y estabilidad del teclado — 8 de octubre de 2026
+
+La barra de sugerencias pertenece al HTML compartido del editor y se coloca entre la ecuación y las pestañas del teclado. Su altura se descuenta únicamente del visor flexible de la ecuación; no cambia el tamaño del WebView/iframe ni la posición de las teclas. Las opciones múltiples se desplazan horizontalmente dentro de la barra. Los modos sin teclado conservan el aviso Flutter y su acceso a la ventana de edición, cuyo teclado usa la misma barra HTML.
+
+Android/iOS y web serializan las propuestas mediante `editor_completion.dart`. El HTML solo presenta texto y envía la selección; el modelo valida la fuente, la propuesta y el espacio pendiente antes de aplicarla. Una pulsación atrasada no puede aplicar una propuesta a otra ecuación ni iniciar un cálculo.
+
+Pasaron **31 comprobaciones** del editor, incluida la barra en 304×380 con ambos temas y el canal `JemBridge` usado por las apps nativas. `scripts/test_completions_web.mjs` mide las coordenadas de teclas y editor mientras se escribe, verifica los diferenciales múltiples y comprueba la desaparición de la sugerencia al llenar un espacio en el editor modal. Permite `WEB_TEST_ONLY` para seleccionar un recorrido y `WEB_TEST_OFFLINE_ONLY=1` para omitir únicamente el cálculo remoto de la integral.
+
 ## Ejecutar
 
 Se requiere Node y una instalación existente de Playwright. El script **no descarga dependencias ni navegadores**. Usa Chrome instalado por defecto:

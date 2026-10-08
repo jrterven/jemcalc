@@ -2,11 +2,15 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import '../core/palette.dart';
+import '../math/completion.dart';
+import 'editor_completion.dart';
 
 class MathEditor extends StatefulWidget {
   const MathEditor({
     super.key,
     this.focusRequest = 0,
+    this.completions = const [],
+    this.onCompletion,
     required this.latex,
     required this.language,
     required this.showKeyboard,
@@ -18,6 +22,8 @@ class MathEditor extends StatefulWidget {
   final bool showKeyboard;
   final ValueChanged<String> onChanged;
   final VoidCallback onSubmit;
+  final List<ExpressionCompletion> completions;
+  final ValueChanged<ExpressionCompletion>? onCompletion;
   @override
   State<MathEditor> createState() => _MathEditorState();
 }
@@ -46,6 +52,13 @@ class _MathEditorState extends State<MathEditor> {
             widget.onChanged(_browserLatex!);
           }
           if (data['type'] == 'submit') widget.onSubmit();
+          if (data['type'] == 'completion') {
+            final suggestion = selectedEditorCompletion(
+              data,
+              widget.completions,
+            );
+            if (suggestion != null) widget.onCompletion?.call(suggestion);
+          }
         },
       )
       ..setNavigationDelegate(
@@ -90,6 +103,10 @@ class _MathEditorState extends State<MathEditor> {
       'language': widget.language,
       'keyboard': widget.showKeyboard,
       'focusRequest': widget.focusRequest,
+      'completion': editorCompletionConfiguration(
+        widget.completions,
+        widget.language,
+      ),
       if (restoreDraft) 'latex': widget.latex,
     };
     if (restoreDraft) _browserLatex = widget.latex;

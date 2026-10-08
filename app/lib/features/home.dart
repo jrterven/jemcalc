@@ -190,6 +190,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                                               key: _editorKey,
                                               focusRequest:
                                                   m.editorFocusRequest,
+                                              completions:
+                                                  m.mode == InputMode.keyboard
+                                                  ? completionSuggestions
+                                                  : const [],
+                                              onCompletion: m.applyCompletion,
                                               latex: m.latex,
                                               language: m.language,
                                               showKeyboard:
@@ -203,7 +208,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                                         ),
                                         if (m.result != null && !m.maximized)
                                           ResultCard(model: m),
-                                        if (completionSuggestions.isNotEmpty)
+                                        if (m.mode != InputMode.keyboard &&
+                                            completionSuggestions.isNotEmpty)
                                           CompletionHint(
                                             suggestions: completionSuggestions,
                                             strings: s,
